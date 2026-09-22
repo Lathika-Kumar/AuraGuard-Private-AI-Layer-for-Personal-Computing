@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+backend/.venv/
+.env
+.env.*
+
+# Node
+node_modules/
+dist/
+.vite/
+frontend/dist/
+frontend/node_modules/
+**/*.tsbuildinfo
+
+# Build artifacts
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Local data
+/data/*
+!/data/.gitkeep
+!/data/documents/.gitkeep
+!/data/extracted/.gitkeep
+!/data/index/.gitkeep
+!/data/audio/.gitkeep
+*.sqlite3
+*.db
+*.faiss
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
