@@ -35,6 +35,10 @@ class Settings:
     document_dir: Path = _resolve_path(os.getenv("DOCUMENT_DIR", str(data_dir / "documents")), str(data_dir / "documents"))
     extracted_dir: Path = _resolve_path(os.getenv("EXTRACTED_DIR", str(data_dir / "extracted")), str(data_dir / "extracted"))
     ai_execution_provider: str = os.getenv("AI_EXECUTION_PROVIDER", "auto").lower()
+    privacy_mode: str = os.getenv("PRIVACY_MODE", "balanced").lower()
+    remind_enabled: bool = os.getenv("REMIND_ENABLED", "true").lower() == "true"
+    memory_vector_index_path: Path = _resolve_path(os.getenv("MEMORY_VECTOR_INDEX_PATH", str(data_dir / "index" / "memory_faiss.index")), str(data_dir / "index" / "memory_faiss.index"))
+    memory_min_score: float = float(os.getenv("MEMORY_MIN_SCORE", "0.30"))
 
 
 settings = Settings()

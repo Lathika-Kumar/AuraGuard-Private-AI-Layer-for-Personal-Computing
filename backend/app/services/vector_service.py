@@ -13,11 +13,16 @@ from app.database.database import get_db_connection
 
 
 class FaissIndex:
-    def __init__(self, dim: int):
+    def __init__(self, dim: int, namespace: str = "documents"):
         self.dim = dim
+        self.namespace = namespace
         settings.vector_index_dir.mkdir(parents=True, exist_ok=True)
-        self.index_path = settings.vector_index_path
-        self.meta_path = settings.vector_index_dir / "index_meta.json"
+        if namespace == "memories":
+            self.index_path = settings.memory_vector_index_path
+            self.meta_path = settings.vector_index_dir / "memory_index_meta.json"
+        else:
+            self.index_path = settings.vector_index_path
+            self.meta_path = settings.vector_index_dir / "index_meta.json"
         self._load_or_create()
 
     def _load_or_create(self) -> None:
@@ -61,6 +66,7 @@ class FaissIndex:
         settings.vector_index_dir.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self.index, str(self.index_path))
         meta = {
+            "namespace": self.namespace,
             "embedding_model": settings.embedding_model,
             "embedding_dimension": self.dim,
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -77,6 +83,7 @@ class FaissIndex:
             except Exception:
                 pass
         return {
+            "namespace": self.namespace,
             "embedding_model": settings.embedding_model,
             "embedding_dimension": self.dim,
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -84,37 +91,52 @@ class FaissIndex:
         }
 
 
-def ensure_mapping_table(conn: sqlite3.Connection | None = None) -> None:
+def ensure_mapping_table(conn: sqlite3.Connection | None = None, table_name: str = "faiss_mappings") -> None:
+    # Whitelist table names to prevent SQL injection
+    safe_table = "memory_faiss_mappings" if table_name == "memory_faiss_mappings" else "faiss_mappings"
+    id_col = "memory_id" if safe_table == "memory_faiss_mappings" else "chunk_id"
     should_close = False
     if conn is None:
         conn = get_db_connection()
         should_close = True
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS faiss_mappings (vector_id INTEGER PRIMARY KEY, chunk_id INTEGER UNIQUE NOT NULL)"
+        f"CREATE TABLE IF NOT EXISTS {safe_table} (vector_id INTEGER PRIMARY KEY, {id_col} INTEGER UNIQUE NOT NULL)"
     )
     if should_close:
         conn.commit()
         conn.close()
 
 
-def map_vector_to_chunk(vector_id: int, chunk_id: int, conn: sqlite3.Connection | None = None) -> None:
+def map_vector_to_chunk(vector_id: int, chunk_id: int, conn: sqlite3.Connection | None = None, table_name: str = "faiss_mappings") -> None:
+    safe_table = "memory_faiss_mappings" if table_name == "memory_faiss_mappings" else "faiss_mappings"
+    id_col = "memory_id" if safe_table == "memory_faiss_mappings" else "chunk_id"
     should_close = False
     if conn is None:
         conn = get_db_connection()
         should_close = True
-    conn.execute("INSERT OR REPLACE INTO faiss_mappings (vector_id, chunk_id) VALUES (?, ?)", (vector_id, chunk_id))
+    conn.execute(f"INSERT OR REPLACE INTO {safe_table} (vector_id, {id_col}) VALUES (?, ?)", (vector_id, chunk_id))
     if should_close:
         conn.commit()
         conn.close()
 
 
-def get_chunk_for_vector(vector_id: int, conn: sqlite3.Connection | None = None) -> int | None:
+def get_chunk_for_vector(vector_id: int, conn: sqlite3.Connection | None = None, table_name: str = "faiss_mappings") -> int | None:
+    safe_table = "memory_faiss_mappings" if table_name == "memory_faiss_mappings" else "faiss_mappings"
+    id_col = "memory_id" if safe_table == "memory_faiss_mappings" else "chunk_id"
     should_close = False
     if conn is None:
         conn = get_db_connection()
         should_close = True
-    row = conn.execute("SELECT chunk_id FROM faiss_mappings WHERE vector_id = ?", (vector_id,)).fetchone()
+    row = conn.execute(f"SELECT {id_col} FROM {safe_table} WHERE vector_id = ?", (vector_id,)).fetchone()
     res = row[0] if row else None
     if should_close:
         conn.close()
     return res
+
+
+def map_vector_to_memory(vector_id: int, memory_id: int, conn: sqlite3.Connection | None = None) -> None:
+    map_vector_to_chunk(vector_id, memory_id, conn=conn, table_name="memory_faiss_mappings")
+
+
+def get_memory_for_vector(vector_id: int, conn: sqlite3.Connection | None = None) -> int | None:
+    return get_chunk_for_vector(vector_id, conn=conn, table_name="memory_faiss_mappings")

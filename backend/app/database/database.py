@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 from app.core.config import settings
 
@@ -100,21 +101,43 @@ def init_db() -> None:
             """
         )
 
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS memory_faiss_mappings (
+                vector_id INTEGER PRIMARY KEY,
+                memory_id INTEGER UNIQUE NOT NULL
+            )
+            """
+        )
+
         _add_column_if_missing(conn, "documents", "pages", "pages INTEGER DEFAULT 0")
         _add_column_if_missing(conn, "document_chunks", "page_number", "page_number INTEGER NOT NULL DEFAULT 1")
         _add_column_if_missing(conn, "document_chunks", "character_count", "character_count INTEGER NOT NULL DEFAULT 0")
         _add_column_if_missing(conn, "document_chunks", "embedding", "embedding BLOB")
 
+        _add_column_if_missing(conn, "memories", "source", "source TEXT DEFAULT 'user'")
+        _add_column_if_missing(conn, "memories", "importance", "importance REAL DEFAULT 0.5")
+        _add_column_if_missing(conn, "memories", "confidence", "confidence REAL DEFAULT 1.0")
+        _add_column_if_missing(conn, "memories", "privacy_level", "privacy_level TEXT DEFAULT 'PERSONAL'")
+        _add_column_if_missing(conn, "memories", "updated_at", "updated_at TEXT")
+        _add_column_if_missing(conn, "memories", "expires_at", "expires_at TEXT")
+        _add_column_if_missing(conn, "memories", "status", "status TEXT NOT NULL DEFAULT 'active'")
+        _add_column_if_missing(conn, "memories", "embedding", "embedding BLOB")
+
+        _add_column_if_missing(conn, "privacy_events", "entity_type", "entity_type TEXT")
+        _add_column_if_missing(conn, "privacy_events", "action", "action TEXT")
+
         conn.commit()
 
 
-def get_dashboard_stats() -> dict[str, int]:
-    with sqlite3.connect(settings.db_path) as conn:
+def get_dashboard_stats() -> dict[str, Any]:
+    with get_db_connection() as conn:
         documents = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
-        memories = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
+        memories = conn.execute("SELECT COUNT(*) FROM memories WHERE status = 'active'").fetchone()[0]
         privacy_events = conn.execute("SELECT COUNT(*) FROM privacy_events").fetchone()[0]
         return {
             "documents_indexed": documents,
             "memories_stored": memories,
             "privacy_events": privacy_events,
+            "privacy_mode": settings.privacy_mode,
         }

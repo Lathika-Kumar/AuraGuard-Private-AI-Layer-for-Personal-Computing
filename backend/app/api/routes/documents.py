@@ -4,7 +4,7 @@ import hashlib
 import os
 import sqlite3
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -20,6 +20,9 @@ router = APIRouter(prefix="/api", tags=["documents"])
 
 class SearchRequest(BaseModel):
     query: str
+    top_k_docs: int = 4
+    top_k_memories: int = 3
+    policy_mode: Optional[str] = None
 
 
 def _validate_pdf(file: UploadFile) -> None:
@@ -149,4 +152,9 @@ async def get_index_status() -> dict[str, Any]:
 @router.post("/search")
 async def search_documents(payload: SearchRequest) -> dict[str, Any]:
     ai = AIProvider()
-    return ai.answer(payload.query)
+    return ai.answer(
+        payload.query,
+        top_k_docs=payload.top_k_docs,
+        top_k_memories=payload.top_k_memories,
+        policy_mode=payload.policy_mode,
+    )

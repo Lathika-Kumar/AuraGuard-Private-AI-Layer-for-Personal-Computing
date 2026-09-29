@@ -29,6 +29,7 @@ frontend/vite.config.d.ts
 !/data/extracted/.gitkeep
 !/data/index/.gitkeep
 !/data/audio/.gitkeep
+backend/data/
 *.sqlite3
 *.db
 *.faiss

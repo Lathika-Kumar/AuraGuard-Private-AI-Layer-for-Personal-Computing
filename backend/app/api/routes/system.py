@@ -18,3 +18,15 @@ async def get_hardware() -> dict[str, Any]:
 async def get_ai_runtime() -> dict[str, Any]:
     """Returns AI runtime status, active models, active execution provider, and fallback details."""
     return HardwareService.get_ai_runtime_info()
+
+
+@router.get("/dashboard-stats")
+async def get_dashboard_stats_endpoint() -> dict[str, Any]:
+    """Returns real database counts for documents, memories, and privacy events."""
+    from app.database.database import get_dashboard_stats
+    stats = get_dashboard_stats()
+    runtime = HardwareService.get_ai_runtime_info()
+    stats["active_execution_provider"] = runtime.get("active_execution_provider", "CPUExecutionProvider")
+    stats["qnn_available"] = runtime.get("qnn_available", False)
+    stats["external_calls"] = 0
+    return stats
