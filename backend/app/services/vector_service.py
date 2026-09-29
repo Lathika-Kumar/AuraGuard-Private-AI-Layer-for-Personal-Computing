@@ -10,6 +10,7 @@ import numpy as np
 
 from app.core.config import settings
 from app.database.database import get_db_connection
+from app.security.encryption_service import encryption_service
 
 
 class FaissIndex:
@@ -35,7 +36,14 @@ class FaissIndex:
                     meta.get("embedding_dimension") == self.dim
                     and meta.get("embedding_model") == settings.embedding_model
                 ):
-                    self.index = faiss.read_index(str(self.index_path))
+                    with open(self.index_path, "rb") as f:
+                        data = f.read()
+                    if encryption_service.is_encrypted(data):
+                        raw_bytes = encryption_service.decrypt_bytes(data)
+                    else:
+                        raw_bytes = data
+                    deserialized = np.frombuffer(raw_bytes, dtype="uint8")
+                    self.index = faiss.deserialize_index(deserialized)
                     return
             except Exception:
                 pass
@@ -64,13 +72,17 @@ class FaissIndex:
 
     def _save(self) -> None:
         settings.vector_index_dir.mkdir(parents=True, exist_ok=True)
-        faiss.write_index(self.index, str(self.index_path))
+        serialized_arr = faiss.serialize_index(self.index)
+        encrypted_bytes = encryption_service.encrypt_bytes(serialized_arr.tobytes())
+        with open(self.index_path, "wb") as f:
+            f.write(encrypted_bytes)
         meta = {
             "namespace": self.namespace,
             "embedding_model": settings.embedding_model,
             "embedding_dimension": self.dim,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "ntotal": self.index.ntotal,
+            "encrypted": True,
         }
         with open(self.meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2)

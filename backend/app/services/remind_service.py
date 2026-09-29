@@ -15,6 +15,7 @@ from app.services.vector_service import (
     get_memory_for_vector,
     map_vector_to_memory,
 )
+from app.security.encryption_service import encryption_service
 
 VALID_MEMORY_TYPES = {"FACT", "PREFERENCE", "TASK", "GOAL", "NOTE", "CONTEXT"}
 VALID_STATUSES = {"active", "archived", "expired"}
@@ -90,7 +91,8 @@ class RemindService:
         # 2. Embed content using real local model
         vec = self.embedder.embed([clean_content])[0]
 
-        # 3. Store in SQLite
+        # 3. Store in SQLite (with AES-256-GCM encryption at rest)
+        encrypted_content = encryption_service.encrypt(clean_content)
         conn = get_db_connection()
         try:
             now = self._now_iso()
@@ -104,7 +106,7 @@ class RemindService:
                 """,
                 (
                     clean_type,
-                    clean_content,
+                    encrypted_content,
                     source,
                     importance,
                     confidence,
@@ -141,6 +143,7 @@ class RemindService:
             data = dict(row)
             # Remove raw blob for JSON serialization
             data.pop("embedding", None)
+            data["content"] = encryption_service.decrypt(data.get("content", ""))
             data["type"] = data.get("memory_type", "NOTE")
 
             # Check expiration
@@ -177,18 +180,20 @@ class RemindService:
             elif not include_expired:
                 query += " AND status != 'expired'"
 
-            if search:
-                query += " AND content LIKE ?"
-                params.append(f"%{search.strip()}%")
-
             query += " ORDER BY created_at DESC"
             rows = conn.execute(query, params).fetchall()
 
+            search_term = search.strip().lower() if search else None
             results = []
             for r in rows:
                 item = dict(r)
                 item.pop("embedding", None)
+                item["content"] = encryption_service.decrypt(item.get("content", ""))
                 item["type"] = item.get("memory_type", "NOTE")
+
+                # If text search requested, filter against decrypted plaintext
+                if search_term and search_term not in item["content"].lower():
+                    continue
 
                 # Check expiration
                 if item.get("status") == "active" and self._is_expired(item.get("expires_at")):
@@ -257,8 +262,9 @@ class RemindService:
                 raise ValueError(f"Memory update rejected: contains sensitive data ({privacy_res.block_reason})")
             
             new_vec = self.embedder.embed([clean_content])[0]
+            encrypted_content = encryption_service.encrypt(clean_content)
             updates.append("content = ?")
-            params.append(clean_content)
+            params.append(encrypted_content)
             updates.append("privacy_level = ?")
             params.append(privacy_res.classification.value)
             updates.append("embedding = ?")
@@ -331,7 +337,8 @@ class RemindService:
                     import numpy as np
                     vec = np.frombuffer(r["embedding"], dtype="float32")
                 else:
-                    vec = self.embedder.embed([r["content"]])[0]
+                    decrypted_content = encryption_service.decrypt(r["content"])
+                    vec = self.embedder.embed([decrypted_content])[0]
                     conn.execute("UPDATE memories SET embedding = ? WHERE id = ?", (vec.tobytes(), r["id"]))
                 vecs_to_add.append(vec)
 
@@ -383,6 +390,7 @@ class RemindService:
 
                 mem = dict(row)
                 mem.pop("embedding", None)
+                mem["content"] = encryption_service.decrypt(mem.get("content", ""))
                 mem["type"] = mem.get("memory_type", "NOTE")
 
                 # Filter inactive, expired, or low importance

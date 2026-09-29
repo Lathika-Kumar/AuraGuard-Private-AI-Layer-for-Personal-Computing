@@ -13,6 +13,7 @@ from app.services.vector_service import (
 )
 from app.database.database import get_db_connection
 from app.core.config import settings
+from app.security.encryption_service import encryption_service
 
 
 class RetrievalService:
@@ -49,12 +50,13 @@ class RetrievalService:
                 if score_norm < settings.retrieval_min_score:
                     continue
                 doc = conn.execute("SELECT * FROM documents WHERE id = ?", (row["document_id"],)).fetchone()
+                decrypted_text = encryption_service.decrypt(row["text"])
                 results.append(
                     {
                         "chunk_id": row["id"],
                         "document_id": row["document_id"],
                         "page_number": row["page_number"],
-                        "text": row["text"],
+                        "text": decrypted_text,
                         "score": score_norm,
                         "document_filename": doc["filename"] if doc else None,
                     }
@@ -72,7 +74,7 @@ class RetrievalService:
             ).fetchall()
             if not rows:
                 return 0
-            texts = [r["text"] for r in rows]
+            texts = [encryption_service.decrypt(r["text"]) for r in rows]
             vecs = self.embedder.embed(texts)
             total = self.index.add(vecs)
             start_id = total - len(vecs)
@@ -103,7 +105,7 @@ class RetrievalService:
                     "message": "No document chunks to index.",
                 }
 
-            texts = [r["text"] for r in rows]
+            texts = [encryption_service.decrypt(r["text"]) for r in rows]
             t0 = time.time()
             vecs = self.embedder.embed(texts)
             t_embed = time.time() - t0

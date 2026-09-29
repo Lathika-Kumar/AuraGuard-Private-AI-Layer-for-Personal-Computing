@@ -33,6 +33,7 @@ backend/data/
 *.sqlite3
 *.db
 *.faiss
+*.dpapi
 
 # Local AI Models and caches
 /models/*

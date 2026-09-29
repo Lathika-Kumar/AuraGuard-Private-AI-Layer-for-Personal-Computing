@@ -129,6 +129,10 @@ def init_db() -> None:
 
         conn.commit()
 
+        # Phase 5: Automatically & idempotently migrate plaintext data to AES-256-GCM
+        from app.database.migration import migrate_to_encrypted_storage
+        migrate_to_encrypted_storage(conn)
+
 
 def get_dashboard_stats() -> dict[str, Any]:
     with get_db_connection() as conn:

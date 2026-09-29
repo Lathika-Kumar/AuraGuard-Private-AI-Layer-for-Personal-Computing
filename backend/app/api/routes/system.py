@@ -36,3 +36,16 @@ async def get_dashboard_stats_endpoint() -> dict[str, Any]:
     stats["qnn_available"] = runtime.get("qnn_available", False)
     stats["external_calls"] = 0
     return stats
+
+
+@router.get("/security")
+async def get_security_status() -> dict[str, Any]:
+    """Returns local storage encryption status, algorithm, key protection method, and privacy boundaries.
+
+    Guarantees no raw keys, ciphertext, or private data are ever exposed.
+    """
+    from app.security.encryption_service import encryption_service
+    meta = encryption_service.get_security_metadata()
+    meta["local_only"] = True
+    meta["cloud_leakage"] = False
+    return meta

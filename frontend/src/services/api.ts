@@ -449,3 +449,24 @@ export async function updatePrivacyPolicy(mode: string): Promise<{ status: strin
   }
   return data;
 }
+
+export type SecurityStatus = {
+  storage_encryption: boolean;
+  algorithm: string;
+  key_length_bits: number;
+  key_protection: string;
+  database_encrypted: boolean;
+  memory_encrypted: boolean;
+  documents_encrypted: boolean;
+  faiss_protection: string;
+  local_only: boolean;
+  cloud_leakage: boolean;
+};
+
+export async function fetchSecurityStatus(): Promise<SecurityStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/system/security`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch security status');
+  }
+  return response.json();
+}

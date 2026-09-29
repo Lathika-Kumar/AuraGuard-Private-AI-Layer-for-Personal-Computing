@@ -5,16 +5,19 @@ import {
   fetchPrivacyPolicy,
   updatePrivacyPolicy,
   analyzePrivacy,
+  fetchSecurityStatus,
   PrivacyEvent,
   PrivacyStats,
   PrivacyPolicyInfo,
   PrivacyAnalysis,
+  SecurityStatus,
 } from '../services/api';
 
 export default function PrivacyCenterPage() {
   const [stats, setStats] = useState<PrivacyStats | null>(null);
   const [events, setEvents] = useState<PrivacyEvent[]>([]);
   const [policy, setPolicy] = useState<PrivacyPolicyInfo | null>(null);
+  const [security, setSecurity] = useState<SecurityStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modeUpdating, setModeUpdating] = useState(false);
@@ -28,14 +31,16 @@ export default function PrivacyCenterPage() {
     try {
       setLoading(true);
       setError(null);
-      const [statsData, eventsData, policyData] = await Promise.all([
+      const [statsData, eventsData, policyData, securityData] = await Promise.all([
         fetchPrivacyStats(),
         fetchPrivacyEvents(50),
         fetchPrivacyPolicy(),
+        fetchSecurityStatus(),
       ]);
       setStats(statsData);
       setEvents(eventsData);
       setPolicy(policyData);
+      setSecurity(securityData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load privacy data');
     } finally {
@@ -119,6 +124,53 @@ export default function PrivacyCenterPage() {
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">External Calls</p>
           <p className="mt-2 text-3xl font-bold text-emerald-400">0</p>
           <p className="mt-1 text-xs text-slate-500">Strict local containment</p>
+        </div>
+      </div>
+
+      {/* Storage Encryption & Key Protection Card */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-100">Secure Local Storage & Encryption at Rest</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Authenticated AES-256-GCM encryption with local hardware-backed key protection.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`font-mono text-xs px-2.5 py-1 rounded border ${
+              security?.storage_encryption
+                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+            }`}>
+              Storage: {security?.storage_encryption ? 'Encrypted' : 'Unencrypted'}
+            </span>
+            <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
+              Key: {security?.key_protection ?? 'Protected Key'}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs font-mono">
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">Cipher & Key</p>
+            <p className="font-bold text-slate-200 mt-1">{security?.algorithm ?? 'AES-256-GCM'} ({security?.key_length_bits ?? 256}-bit)</p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">ReMind Memories</p>
+            <p className={`font-bold mt-1 ${security?.memory_encrypted ? 'text-emerald-400' : 'text-slate-200'}`}>
+              {security?.memory_encrypted ? 'Encrypted at Rest' : 'Plaintext'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">Document Chunks</p>
+            <p className={`font-bold mt-1 ${security?.documents_encrypted ? 'text-emerald-400' : 'text-slate-200'}`}>
+              {security?.documents_encrypted ? 'Encrypted at Rest' : 'Plaintext'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">FAISS Index Protection</p>
+            <p className="font-bold text-cyan-400 mt-1">{security?.faiss_protection ?? 'Envelope at Rest'}</p>
+          </div>
         </div>
       </div>
 

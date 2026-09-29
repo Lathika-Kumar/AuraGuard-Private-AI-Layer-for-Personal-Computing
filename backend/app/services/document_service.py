@@ -7,6 +7,7 @@ from typing import Iterable, List, Tuple
 
 from app.core.config import settings
 from app.database.database import get_db_connection
+from app.security.encryption_service import encryption_service
 from pypdf import PdfReader
 
 
@@ -101,9 +102,10 @@ def ingest_document(file_path: Path, filename: str, mime_type: str | None = None
             cleaned = clean_text(page_text)
             page_chunks = chunk_text(cleaned)
             for c in page_chunks:
+                encrypted_chunk = encryption_service.encrypt(c)
                 conn.execute(
                     "INSERT INTO document_chunks (document_id, chunk_index, page_number, text, character_count) VALUES (?, ?, ?, ?, ?)",
-                    (doc_id, chunk_index, page_num, c, len(c)),
+                    (doc_id, chunk_index, page_num, encrypted_chunk, len(c)),
                 )
                 chunk_index += 1
         conn.execute("UPDATE documents SET status = 'processed', processed_at = CURRENT_TIMESTAMP WHERE id = ?", (doc_id,))

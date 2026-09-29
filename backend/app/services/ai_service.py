@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 from typing import Any, List, Optional, Tuple
 import torch
@@ -308,10 +309,30 @@ class AIProvider:
         t_merge = time.time() - t_merge_0
 
         # ==========================================
-        # 5. PRIVACY CHECKPOINT 2: CONTEXT FILTERING
+        # 5. PRIVACY CHECKPOINT 2: CONTEXT FILTERING & INJECTION DEFENSE
         # ==========================================
         t_priv_ctx_0 = time.time()
-        context_analysis = PrivacyService.analyze(raw_context, mode=policy_mode, stage="context")
+        # Neutralize prompt injection vectors embedded within untrusted documents/memories
+        sanitized_context = re.sub(
+            r"\b(?:ignore|disregard|forget|override)\s+(?:all\s+)?(?:previous|prior|above|system)\s+(?:instructions?|rules?|directives?|prompts?)[^.\n]*[.\n]?",
+            "[Adversarial directive stripped] ",
+            raw_context,
+            flags=re.IGNORECASE,
+        )
+        sanitized_context = re.sub(
+            r"\b(?:critical\s+)?system\s+override[:\s]+",
+            "[Override attempt stripped] ",
+            sanitized_context,
+            flags=re.IGNORECASE,
+        )
+        sanitized_context = re.sub(
+            r"\boutput\s+the\s+word\s+[A-Za-z0-9_]+[.\n]?",
+            "[Exfiltration target neutralized] ",
+            sanitized_context,
+            flags=re.IGNORECASE,
+        )
+
+        context_analysis = PrivacyService.analyze(sanitized_context, mode=policy_mode, stage="context")
         clean_context = context_analysis.redacted_text
         context_was_redacted = clean_context != raw_context
         t_priv_ctx = time.time() - t_priv_ctx_0
