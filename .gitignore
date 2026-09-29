@@ -8,6 +8,7 @@ venv/
 backend/.venv/
 .env
 .env.*
+!.env.example
 
 # Node
 node_modules/
@@ -31,6 +32,11 @@ frontend/vite.config.d.ts
 *.sqlite3
 *.db
 *.faiss
+
+# Local AI Models and caches
+/models/*
+!/models/.gitkeep
+models/
 
 # OS / editor
 .DS_Store

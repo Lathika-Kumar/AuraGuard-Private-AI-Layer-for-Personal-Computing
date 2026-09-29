@@ -11,6 +11,9 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.database.database import get_db_connection
+from app.services.document_service import ingest_document
+from app.services.retrieval_service import RetrievalService
+from app.services.ai_service import AIProvider
 
 router = APIRouter(prefix="/api", tags=["documents"])
 
@@ -93,12 +96,19 @@ async def upload_document(file: UploadFile = File(...)) -> dict[str, Any]:
         conn.commit()
         document_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
+    # kick off ingestion and indexing synchronously for now
+    result = ingest_document(destination, safe_name, mime_type="application/pdf", document_id=document_id)
+    # if processed, index into vector store
+    if result.get("status") == "processed":
+        retriever = RetrievalService()
+        retriever.index_document_chunks(result["document_id"])
+
     return {
         "id": document_id,
         "filename": safe_name,
         "file_hash": file_hash,
-        "status": "uploaded",
-        "message": "PDF received and stored locally.",
+        "status": result.get("status", "uploaded"),
+        "message": "PDF received and processed (or queued).",
     }
 
 
@@ -117,13 +127,26 @@ async def delete_document(document_id: int) -> dict[str, str]:
         conn.execute("DELETE FROM document_chunks WHERE document_id = ?", (document_id,))
         conn.commit()
 
+    # Rebuild index to eliminate orphaned vectors
+    retriever = RetrievalService()
+    retriever.rebuild_index()
+
     return {"status": "deleted", "message": "Document deleted from local storage."}
+
+
+@router.post("/index/rebuild")
+async def rebuild_index() -> dict[str, Any]:
+    retriever = RetrievalService()
+    return retriever.rebuild_index()
+
+
+@router.get("/index/status")
+async def get_index_status() -> dict[str, Any]:
+    retriever = RetrievalService()
+    return retriever.index.get_metadata()
 
 
 @router.post("/search")
 async def search_documents(payload: SearchRequest) -> dict[str, Any]:
-    return {
-        "answer": "I couldn't find enough relevant information in your local documents.",
-        "sources": [],
-        "query": payload.query,
-    }
+    ai = AIProvider()
+    return ai.answer(payload.query)

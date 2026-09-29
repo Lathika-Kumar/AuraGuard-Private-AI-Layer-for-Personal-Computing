@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import { fetchDocuments } from '../services/api';
+import { fetchDocuments, uploadDocument, deleteDocument } from '../services/api';
 
 type DocumentItem = {
   id: number;
@@ -40,19 +40,8 @@ export default function DocumentsPage() {
     setUploadMessage(null);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const response = await fetch('http://localhost:8000/api/documents/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.detail || 'Upload failed');
-      }
+      const payload = await uploadDocument(file);
       setUploadMessage(`Uploaded: ${payload.filename} (${payload.status})`);
       await loadDocuments();
     } catch (err) {
@@ -65,13 +54,7 @@ export default function DocumentsPage() {
 
   async function handleDelete(documentId: number) {
     try {
-      const response = await fetch(`http://localhost:8000/api/documents/${documentId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Delete failed');
-      }
+      await deleteDocument(documentId);
       await loadDocuments();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Deletion error');

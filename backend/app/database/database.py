@@ -8,9 +8,17 @@ from app.core.config import settings
 
 def get_db_connection() -> sqlite3.Connection:
     settings.db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(settings.db_path)
+    conn = sqlite3.connect(settings.db_path, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _add_column_if_missing(conn: sqlite3.Connection, table_name: str, column_name: str, column_definition: str) -> None:
+    columns = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+    if not any(column[1] == column_name for column in columns):
+        conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
 
 
 def init_db() -> None:
@@ -27,6 +35,7 @@ def init_db() -> None:
                 file_hash TEXT NOT NULL,
                 mime_type TEXT,
                 file_size INTEGER,
+                pages INTEGER DEFAULT 0,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 processed_at TEXT,
                 status TEXT NOT NULL DEFAULT 'pending'
@@ -40,7 +49,10 @@ def init_db() -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 document_id INTEGER NOT NULL,
                 chunk_index INTEGER NOT NULL,
+                page_number INTEGER NOT NULL DEFAULT 1,
                 text TEXT NOT NULL,
+                character_count INTEGER NOT NULL DEFAULT 0,
+                embedding BLOB,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
             )
@@ -87,6 +99,11 @@ def init_db() -> None:
             )
             """
         )
+
+        _add_column_if_missing(conn, "documents", "pages", "pages INTEGER DEFAULT 0")
+        _add_column_if_missing(conn, "document_chunks", "page_number", "page_number INTEGER NOT NULL DEFAULT 1")
+        _add_column_if_missing(conn, "document_chunks", "character_count", "character_count INTEGER NOT NULL DEFAULT 0")
+        _add_column_if_missing(conn, "document_chunks", "embedding", "embedding BLOB")
 
         conn.commit()
 

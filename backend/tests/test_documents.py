@@ -15,7 +15,10 @@ def test_search_returns_no_relevant_info() -> None:
     response = client.post('/api/search', json={'query': 'What is the plan?'})
     assert response.status_code == 200
     payload = response.json()
-    assert payload['answer'] == "I couldn't find enough relevant information in your local documents."
+    assert payload['answer'] in (
+        "No local documents are indexed yet.",
+        "I couldn't find enough relevant information in your local documents.",
+    )
     assert payload['sources'] == []
 
 
