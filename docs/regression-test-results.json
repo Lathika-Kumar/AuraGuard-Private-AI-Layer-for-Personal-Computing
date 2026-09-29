@@ -1,0 +1,35 @@
+{
+  "privacy_detection": {
+    "status": "PASS",
+    "detected_entities": [
+      "EMAIL",
+      "CREDIT/DEBIT CARD"
+    ],
+    "classification": "HIGHLY_SENSITIVE",
+    "redacted_text": "My email is support@auraguard.internal and card is [REDACTED_CREDIT_DEBIT_CARD]."
+  },
+  "sensitive_entity_defense": {
+    "status": "PASS",
+    "classification": "HIGHLY_SENSITIVE",
+    "allowed": false
+  },
+  "document_retrieval": {
+    "status": "PASS",
+    "top_doc_fp32_index": 0,
+    "top_doc_fp32_score": 0.7447232096118809,
+    "top_doc_int8_index": 0,
+    "top_doc_int8_score": 0.7823377115546803,
+    "rank_consistency": true
+  },
+  "memory_retrieval": {
+    "status": "PASS",
+    "top_memory_fp32_index": 1,
+    "top_memory_int8_index": 1,
+    "consistency": true
+  },
+  "output_guard": {
+    "status": "PASS",
+    "was_modified": false,
+    "blocked": false
+  }
+}

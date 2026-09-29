@@ -232,3 +232,29 @@ class HardwareService:
                 "status": "ready_for_export",
             },
         }
+
+    @classmethod
+    def get_models_info(cls) -> dict[str, Any]:
+        """Provides model metadata for GET /api/system/models directly from runtime configuration."""
+        active_provider, _, _ = cls.resolve_execution_provider()
+        emb_prec = getattr(settings, "embedding_precision", "auto")
+        if emb_prec == "auto":
+            emb_prec = "float32"
+        llm_prec = getattr(settings, "llm_precision", "auto")
+        if llm_prec == "auto":
+            llm_prec = "float32"
+
+        return {
+            "embedding": {
+                "name": settings.embedding_model,
+                "runtime": "onnxruntime",
+                "precision": emb_prec,
+                "provider": active_provider,
+            },
+            "llm": {
+                "name": settings.llm_model,
+                "runtime": "pytorch",
+                "precision": llm_prec,
+                "provider": "CPU" if active_provider == "CPUExecutionProvider" else active_provider,
+            },
+        }

@@ -1,111 +1,90 @@
-# Qualcomm AI Hub Integration & Workflow Guide
+# Qualcomm AI Hub Deployment & Compilation Architecture
 
-## 1. Overview
-
-**Qualcomm AI Hub** is a cloud-assisted compilation, profiling, and optimization platform designed to compile PyTorch and ONNX models into hardware-accelerated binaries optimized for Qualcomm Snapdragon processors and Qualcomm Hexagon NPUs.
-
-In AuraGuard, Qualcomm AI Hub serves as the deployment pipeline bridge between local PyTorch/ONNX development and on-device Snapdragon NPU acceleration.
+This document specifies the Qualcomm AI Hub compilation pipeline and target deployment specifications for AuraGuard's on-device neural models targeting Qualcomm Snapdragon X Elite compute platforms and Hexagon NPU accelerators.
 
 ---
 
-## 2. Supported Target Platforms
+## 1. Overview & Strategy
 
-AuraGuard targets the Snapdragon X series platforms:
+Qualcomm AI Hub (`qai-hub`) provides cloud-hosted and on-device compilation, profiling, and quantization workflows to convert PyTorch / ONNX models into optimized Qualcomm Neural Network (QNN) context binaries (`.bin` / DLC) targeted specifically at Snapdragon processors (Snapdragon 8 Gen 3, Snapdragon X Elite CRD, Snapdragon X Plus).
 
-* **Snapdragon X Elite** (X1E-84-100, X1E-80-100, X1E-78-100): 45 TOPS Hexagon NPU, 12 Oryon cores
-* **Snapdragon X Plus** (X1P-64-100): 45 TOPS Hexagon NPU, 10 Oryon cores
-* **Target OEM Reference**: HP OmniBook X / HP EliteBook Ultra
-
----
-
-## 3. AuraGuard Model Conversion Pipeline
-
-AuraGuard uses two core neural models:
-1. **Embedding**: `sentence-transformers/all-MiniLM-L6-v2` (Dimension: 384)
-2. **Language Model**: `Qwen/Qwen2.5-0.5B-Instruct` (0.49B parameters)
-
-### Pipeline Flowchart
-
-```
-+-------------------------------------------------------------+
-|                AuraGuard Model Repository                   |
-+------------------------------+------------------------------+
-                               |
-            [Qualcomm AI Hub CLI / Python SDK]
-                               |
-        +----------------------+----------------------+
-        |                                             |
-+-------v----------------------+      +---------------v--------------+
-| 1. all-MiniLM-L6-v2 (ONNX)   |      | 2. Qwen2.5-0.5B-Instruct     |
-| - INT8 Post-Training Quant   |      | - INT4 AWQ / W4A16 Quant     |
-| - HTP Operator Mapping       |      | - KV Cache Graph Unrolling   |
-+--------------+---------------+      +---------------+--------------+
-               |                                      |
-+--------------v---------------+      +---------------v--------------+
-| QNN / HTP Context Binary     |      | QNN / HTP Model Context      |
-| `all-minilm-l6-v2.bin`       |      | `qwen2.5-0.5b-qnn.bin`       |
-+--------------+---------------+      +---------------+--------------+
-               |                                      |
-+--------------v--------------------------------------v--------------+
-|       AuraGuard On-Device Runtime (QNNExecutionProvider)           |
-+--------------------------------------------------------------------+
-```
+In AuraGuard's zero-cloud-inference architecture:
+1. **Compilation Phase**: Model weights are traced and compiled via Qualcomm AI Hub CLI or SDK offline or during deployment packaging. **Zero user private data is ever sent to Qualcomm AI Hub.** Only base open-weight model architectures and quantization calibration sets are submitted.
+2. **Runtime Phase**: The compiled QNN context binary runs 100% locally on the device using `QNNExecutionProvider` (part of ONNX Runtime with Qualcomm QNN EP). No external network calls are made during inference.
 
 ---
 
-## 4. Step-by-Step Compilation Commands via Qualcomm AI Hub
+## 2. Model Profiles for Qualcomm AI Hub
 
-### Step 1: Authentication & Setup
-```bash
-pip install qai-hub
-qai-hub configure --api_token <YOUR_QUALCOMM_AI_HUB_API_TOKEN>
-```
+### A. Embedding Model: `all-MiniLM-L6-v2`
+- **Source**: `sentence-transformers/all-MiniLM-L6-v2`
+- **Target Platform**: Snapdragon X Elite CRD (Compute Unit: NPU)
+- **Precision**: INT8 (W8A8 dynamic / static quantization)
+- **Input Specifications**:
+  - `input_ids`: `int64[batch, 128]`
+  - `attention_mask`: `int64[batch, 128]`
+  - `token_type_ids`: `int64[batch, 128]`
+- **Output Specification**:
+  - `sentence_embedding`: `float32[batch, 384]` (L2 normalized)
+- **Qualcomm AI Hub Target ID**: `all-minilm-l6-v2` / custom ONNX upload
+- **Compilation Options**:
+  ```bash
+  qai-hub compile \
+    --model models/onnx/embedding_model.onnx \
+    --device "Snapdragon X Elite CRD" \
+    --options "--target_runtime qnn_lib --compute_unit npu" \
+    --output-file models/qnn/all_minilm_l6_v2_int8.bin
+  ```
 
-### Step 2: Compile Embedding Model for Hexagon NPU
-```bash
-# Compile and profile all-MiniLM-L6-v2 for Snapdragon X Elite
-qai-hub compile \
-  --model "sentence-transformers/all-MiniLM-L6-v2" \
-  --device "Snapdragon X Elite CRD" \
-  --target_runtime qnn_lib_aarch64_android \
-  --options "--quantize_full_type int8" \
-  --output_dir "./models/qnn_export/embedding"
-```
+### B. Generative LLM: `Qwen2.5-0.5B-Instruct`
+- **Source**: `Qwen/Qwen2.5-0.5B-Instruct`
+- **Target Platform**: Snapdragon X Elite CRD (Compute Unit: NPU)
+- **Target Precision**: INT4 (W4A16 block-wise quantization with FP16 activations)
+- **Context Length**: 512–1024 tokens (budgeted for personal computing assistant memory and RAG context)
+- **KV Cache**: Layer-wise key-value cache with static dimensions for NPU tensor allocation
+- **AI Hub Support Status**: Supported via Qualcomm AI Hub Hugging Face integration (`qai-hub-models`).
+- **Compilation Workflow**:
+  ```bash
+  python -m qai_hub_models.models.qwen2_5_0_5b_instruct.export \
+    --device "Snapdragon X Elite CRD" \
+    --quantize w4a16 \
+    --target-runtime qnn_context_binary \
+    --output-dir models/qnn/
+  ```
 
-### Step 3: Profile Model Performance on Real Snapdragon Hardware
-```bash
-# Submit remote profiling job to Qualcomm cloud device farm
-qai-hub profile \
-  --model "./models/qnn_export/embedding/model.bin" \
-  --device "Snapdragon X Elite CRD"
-```
+---
 
-### Step 4: ONNX Runtime QNN Execution Provider Integration
-In AuraGuard `backend/app/services/embedding_service.py`, the QNN execution provider is dynamically invoked:
-```python
-providers = [
-    (
-        "QNNExecutionProvider",
-        {
-            "backend_path": "QnnHtp.dll",
-            "htp_performance_mode": "burst",
-            "htp_graph_finalization_optimization_mode": "3",
-        },
-    ),
-    "CPUExecutionProvider",
-]
+## 3. Alternative Evaluated Models
+
+| Model | Size | Precision | AI Hub Pre-optimized? | Evaluation Result for AuraGuard |
+| :--- | :--- | :--- | :--- | :--- |
+| **Qwen2.5-0.5B-Instruct** | 494M params | INT4 (W4A16) | Yes | **Selected Primary**: Fits strictly within 8GB/16GB system RAM alongside Windows OS, fast time-to-first-token. |
+| **Llama-3.2-1B-Instruct** | 1.23B params | INT4 (W4A16) | Yes | **Evaluated Alternative**: Viable on 16GB Snapdragon X Elite machines; slightly higher RAM pressure on 8GB machines. |
+| **Phi-3.5-mini-instruct** | 3.82B params | INT4 (W4A16) | Yes | **Evaluated Alternative**: Strong reasoning, but 3.8B requires ~2.5 GB dedicated NPU RAM, exceeding low-memory machine headroom. |
+
+---
+
+## 4. Qualcomm AI Hub Compilation Workflow (`ai_hub_compile.py`)
+
+AuraGuard provides a reproducible script under [ai_hub_compile.py](file:///e:/Auraguard/scripts/qualcomm/ai_hub_compile.py).
+
+The workflow follows these verified steps:
+1. **API Authentication Verification**: Checks for `QAI_HUB_API_TOKEN` environment variable.
+2. **Device Discovery**: Queries Qualcomm AI Hub cloud API for active Snapdragon X Elite hardware testbeds.
+3. **Artifact Staging**: Uploads validated ONNX or PyTorch weights.
+4. **Compilation Job**: Submits compilation with `--target_runtime qnn_lib --compute_unit npu`.
+5. **Download QNN Binary**: Retrieves compiled `.bin` context binary into `models/qnn/`.
+
+**Current Host Execution Status**:
+```text
+Compilation Job Status: PREPARED
+Execution: HALTED AT AUTHENTICATION GATEWAY (Target Hardware & API Token Required)
+Result: No fake compilation or mocked QNN binaries generated.
 ```
 
 ---
 
-## 5. Verification on Development vs Target Hardware
+## 5. Privacy and Isolation Guarantees
 
-* **On Development PC (Intel Core i5-1235U)**:
-  - Detects no Qualcomm Hexagon NPU.
-  - Automatically activates `CPUExecutionProvider`.
-  - Zero crashes, 100% test passing, verified CPU baseline.
-* **On Snapdragon Copilot+ PC (HP OmniBook X)**:
-  - Detects `ARM64` architecture and `QNNExecutionProvider`.
-  - Automatically directs tensor workloads to Hexagon HTP.
-  - Reduces embedding latency from ~2.9 ms to <0.8 ms/chunk.
-  - Reduces LLM generation latency by up to 3-5x at sub-watt power draw.
+- **No User Data Leakage**: Compilation only packages generic open-source model weights.
+- **Local Runtime**: Once the QNN binary is downloaded, all embeddings, user documents, ReMind contextual memories, and LLM inferences occur strictly within local RAM and the on-device Hexagon NPU.

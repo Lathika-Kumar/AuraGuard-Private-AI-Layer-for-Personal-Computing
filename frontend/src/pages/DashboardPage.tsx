@@ -4,9 +4,11 @@ import {
   fetchHardware,
   fetchAIRuntime,
   fetchDashboardStats,
+  fetchSystemModels,
   HardwareInfo,
   AIRuntimeInfo,
   DashboardStats,
+  SystemModelsResponse,
 } from '../services/api';
 
 export default function DashboardPage() {
@@ -14,21 +16,24 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [hardware, setHardware] = useState<HardwareInfo | null>(null);
   const [aiRuntime, setAiRuntime] = useState<AIRuntimeInfo | null>(null);
+  const [models, setModels] = useState<SystemModelsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [healthResponse, statsResponse, hwResponse, runtimeResponse] = await Promise.all([
+        const [healthResponse, statsResponse, hwResponse, runtimeResponse, modelsResponse] = await Promise.all([
           fetchHealth(),
           fetchDashboardStats(),
           fetchHardware(),
           fetchAIRuntime(),
+          fetchSystemModels().catch(() => null),
         ]);
         setHealth(healthResponse);
         setStats(statsResponse);
         setHardware(hwResponse);
         setAiRuntime(runtimeResponse);
+        setModels(modelsResponse);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load dashboard data.');
       }
@@ -80,6 +85,102 @@ export default function DashboardPage() {
           detail="Redactions & shield events"
           icon="🛡️"
         />
+      </div>
+
+      {/* Technical Model / AI Runtime Specification Panel */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-5 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              AI Runtime Specification
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              On-device execution pipeline &bull; Qualcomm AI Hub target profile
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
+              Execution: {hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNN' : 'CPU'}
+            </span>
+            <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
+              Device: {hardware?.snapdragon.is_snapdragon ? 'Snapdragon' : 'Intel'}
+            </span>
+            <span className={`font-mono text-xs px-2.5 py-1 rounded border ${
+              aiRuntime?.npu_available
+                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+            }`}>
+              Accelerator: {aiRuntime?.npu_available ? 'NPU' : 'NPU unavailable'}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs font-mono">
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Embedding Model</span>
+            <span className="text-slate-200 text-sm font-semibold truncate block mt-0.5">
+              {models?.embedding.name.split('/').pop() ?? 'all-MiniLM-L6-v2'}
+            </span>
+            <div className="mt-2 text-slate-400 space-y-0.5 text-[11px]">
+              <div>Runtime: <span className="text-cyan-300">{models?.embedding.runtime ?? 'onnxruntime'}</span></div>
+              <div>Precision: <span className="text-emerald-400">{models?.embedding.precision ?? 'float32'}</span></div>
+              <div>Provider: <span className="text-slate-300">{models?.embedding.provider ?? 'CPUExecutionProvider'}</span></div>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">LLM Model</span>
+            <span className="text-slate-200 text-sm font-semibold truncate block mt-0.5">
+              {models?.llm.name.split('/').pop() ?? 'Qwen2.5-0.5B-Instruct'}
+            </span>
+            <div className="mt-2 text-slate-400 space-y-0.5 text-[11px]">
+              <div>Runtime: <span className="text-cyan-300">{models?.llm.runtime ?? 'pytorch'}</span></div>
+              <div>Precision: <span className="text-emerald-400">{models?.llm.precision ?? 'float32'}</span></div>
+              <div>Provider: <span className="text-slate-300">{models?.llm.provider ?? 'CPU'}</span></div>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Active Execution State</span>
+            <div className="mt-1 space-y-1.5 text-[11px] text-slate-300">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Execution:</span>
+                <span className="text-cyan-300 font-semibold">{hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNN' : 'CPU'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Device:</span>
+                <span className="text-slate-200">{hardware?.snapdragon.is_snapdragon ? 'Snapdragon' : 'Intel'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Accelerator:</span>
+                <span className={aiRuntime?.npu_available ? 'text-emerald-400' : 'text-amber-400'}>
+                  {aiRuntime?.npu_available ? 'NPU' : 'NPU unavailable'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Target Platform</span>
+            <div className="mt-1 space-y-1.5 text-[11px] text-slate-300">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Target Arch:</span>
+                <span className="text-slate-200">Snapdragon X Elite</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Target NPU:</span>
+                <span className="text-slate-200">Qualcomm Hexagon</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">LLM Precision:</span>
+                <span className="text-emerald-400">
+                  {hardware?.snapdragon.is_snapdragon ? 'INT4' : (models?.llm.precision ?? 'float32')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* AI Runtime & Hardware Readiness */}

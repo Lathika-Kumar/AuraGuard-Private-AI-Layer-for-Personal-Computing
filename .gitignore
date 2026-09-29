@@ -38,6 +38,13 @@ backend/data/
 /models/*
 !/models/.gitkeep
 models/
+*.onnx
+*.onnx.data
+*.bin
+*.dlc
+*.quant
+*.engine
+*.pte
 
 # OS / editor
 .DS_Store

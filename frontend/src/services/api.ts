@@ -206,6 +206,26 @@ export async function fetchAIRuntime(): Promise<AIRuntimeInfo> {
   return response.json();
 }
 
+export type ModelDetail = {
+  name: string;
+  runtime: string;
+  precision: string;
+  provider: string;
+};
+
+export type SystemModelsResponse = {
+  embedding: ModelDetail;
+  llm: ModelDetail;
+};
+
+export async function fetchSystemModels(): Promise<SystemModelsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/system/models`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch system models');
+  }
+  return response.json();
+}
+
 export type DashboardStats = {
   documents_indexed: number;
   memories_stored: number;

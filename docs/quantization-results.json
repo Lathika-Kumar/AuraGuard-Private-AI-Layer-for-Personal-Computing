@@ -1,0 +1,26 @@
+{
+  "embedding": {
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "fp32_size_mb": 86.2,
+    "int8_size_mb": 21.82,
+    "size_reduction_pct": 74.68,
+    "load_time_fp32_ms": 317.6,
+    "load_time_int8_ms": 308.01,
+    "avg_latency_fp32_ms": 14.7,
+    "avg_latency_int8_ms": 22.68,
+    "min_cosine_similarity": 0.947481,
+    "avg_cosine_similarity": 0.952862,
+    "quality_preservation": "DEGRADED"
+  },
+  "llm": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "fp32_latency_16tok_ms": 3132.56,
+    "fp32_tokens_per_sec": 5.11,
+    "fp32_load_time_ms": 4485.18,
+    "fp32_output_snippet": "Question: What is AuraGuard?\nAnswer: AuraGuard is a cloud-based security solution that provides real",
+    "int8_status": "PREPARED FOR QUALCOMM AI HUB COMPILATION",
+    "int8_details": "Host CPU x86 with PyTorch 2.14 lacks native dynamic INT8 support for Qwen2 causal architecture (deprecated torch.ao aborts on tied weights). Qualcomm AI Hub compiles Qwen2.5 to INT8 QNN binary via AIMET quantization.",
+    "int4_status": "NOT EXECUTED \u2014 TARGET HARDWARE REQUIRED",
+    "int4_details": "INT4 weight-only / AWQ quantization is designed for Qualcomm Hexagon NPU QNN backend. Target compilation on Qualcomm AI Hub produces Snapdragon X Elite INT4 NPU artifact."
+  }
+}

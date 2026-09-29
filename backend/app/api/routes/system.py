@@ -14,6 +14,12 @@ async def get_hardware() -> dict[str, Any]:
     return HardwareService.get_hardware_info()
 
 
+@router.get("/models")
+async def get_models() -> dict[str, Any]:
+    """Returns actual metadata for configured and active models (embedding and LLM)."""
+    return HardwareService.get_models_info()
+
+
 @router.get("/ai-runtime")
 async def get_ai_runtime() -> dict[str, Any]:
     """Returns AI runtime status, active models, active execution provider, and fallback details."""

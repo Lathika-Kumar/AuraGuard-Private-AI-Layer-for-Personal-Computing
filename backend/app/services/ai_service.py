@@ -55,7 +55,8 @@ class AIProvider:
         self.device = device or settings.llm_device
         self.retriever = RetrievalService()
         self.remind = RemindService()
-        self._ensure_model_loaded()
+        self.tokenizer = AIProvider._tokenizer
+        self.model = AIProvider._model
 
     def _ensure_model_loaded(self) -> None:
         if AIProvider._model is None or AIProvider._loaded_model_id != self.model_id:
@@ -70,8 +71,8 @@ class AIProvider:
             AIProvider._model = AutoModelForCausalLM.from_pretrained(
                 self.model_id,
                 cache_dir=str(settings.model_cache_dir / "huggingface"),
-                torch_dtype=torch.float32,
-                low_cpu_mem_usage=True,
+                dtype=torch.bfloat16,
+                low_cpu_mem_usage=False,
             )
             AIProvider._model.eval()
             AIProvider._loaded_model_id = self.model_id
@@ -90,12 +91,13 @@ class AIProvider:
             "fallback_occurred": fallback_occurred,
             "status_reason": status_reason,
             "device": self.device,
-            "precision": "float32",
+            "precision": "bfloat16" if getattr(AIProvider._model, "dtype", None) == torch.bfloat16 else "float32",
             "max_new_tokens": settings.llm_max_new_tokens,
         }
 
     def generate(self, question: str, context: str) -> Tuple[str, float]:
         """Generate a strictly grounded answer from context. Returns (answer, latency_seconds)."""
+        self._ensure_model_loaded()
         messages = [
             {"role": "system", "content": AURA_GUARD_SYSTEM_PROMPT},
             {

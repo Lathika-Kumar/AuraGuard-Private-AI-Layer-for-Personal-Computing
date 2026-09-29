@@ -1,0 +1,49 @@
+{
+  "pipeline_state": "PREPARED",
+  "manifest": {
+    "embedding": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "source_artifact": "models/onnx/embedding_model.onnx",
+      "target_device": "Snapdragon X Elite CRD",
+      "accelerator": "Qualcomm Hexagon NPU",
+      "runtime": "QNN (Qualcomm Neural Network) v2.22+",
+      "precision": "INT8 (w8a8) / FP16 fallback",
+      "input_shapes": {
+        "input_ids": [
+          1,
+          128
+        ],
+        "attention_mask": [
+          1,
+          128
+        ],
+        "token_type_ids": [
+          1,
+          128
+        ]
+      },
+      "output_shapes": {
+        "last_hidden_state": [
+          1,
+          128,
+          384
+        ]
+      },
+      "compiler_options": "--target_runtime qnn_context_binary --quantization_overrides w8a8",
+      "expected_artifact": "all_minilm_l6_v2_qnn_npu.bin"
+    },
+    "llm": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+      "source_model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+      "target_device": "Snapdragon X Elite CRD",
+      "accelerator": "Qualcomm Hexagon NPU",
+      "runtime": "QNN v2.22+ via ONNX Runtime GenAI",
+      "precision": "INT4 (w4a16) / INT8 (w8a16)",
+      "context_window": 2048,
+      "compiler_options": "--target_runtime qnn_context_binary --weights_precision int4 --activations_precision fp16",
+      "expected_artifact": "qwen2_5_0_5b_qnn_w4a16.bin"
+    }
+  },
+  "auth_configured": false,
+  "status": "PREPARATION COMPLETE \u2014 AUTHENTICATION REQUIRED FOR CLOUD COMPILATION"
+}
