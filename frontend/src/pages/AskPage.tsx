@@ -92,6 +92,7 @@ export default function AskPage() {
                 <span className="text-xs text-slate-400">
                   Local execution: {metrics.total_latency_seconds}s
                   {metrics.llm_latency_seconds ? ` (LLM: ${metrics.llm_latency_seconds}s)` : ''}
+                  {metrics.execution_provider ? ` • ${metrics.execution_provider}` : ''}
                 </span>
               ) : null}
             </div>

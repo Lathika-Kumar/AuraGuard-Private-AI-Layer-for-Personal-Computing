@@ -34,6 +34,7 @@ class Settings:
     vector_index_dir: Path = _resolve_path(os.getenv("VECTOR_INDEX_DIR", str(data_dir / "index")), str(data_dir / "index"))
     document_dir: Path = _resolve_path(os.getenv("DOCUMENT_DIR", str(data_dir / "documents")), str(data_dir / "documents"))
     extracted_dir: Path = _resolve_path(os.getenv("EXTRACTED_DIR", str(data_dir / "extracted")), str(data_dir / "extracted"))
+    ai_execution_provider: str = os.getenv("AI_EXECUTION_PROVIDER", "auto").lower()
 
 
 settings = Settings()

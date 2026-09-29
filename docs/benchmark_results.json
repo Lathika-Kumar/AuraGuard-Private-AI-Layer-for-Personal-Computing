@@ -1,0 +1,110 @@
+{
+  "hardware": {
+    "os": {
+      "system": "Windows",
+      "release": "11",
+      "version": "10.0.26200",
+      "platform": "Windows-11-10.0.26200-SP0"
+    },
+    "cpu": {
+      "brand": "12th Gen Intel(R) Core(TM) i5-1235U",
+      "architecture": "AMD64",
+      "physical_cores": 10,
+      "logical_cores": 12
+    },
+    "gpu": {
+      "name": "Intel(R) UHD Graphics"
+    },
+    "memory": {
+      "total_bytes": 8216313856,
+      "total_gb": 7.65,
+      "available_bytes": 1784430592,
+      "available_gb": 1.66,
+      "percent_used": 78.3
+    },
+    "snapdragon": {
+      "is_snapdragon": false,
+      "processor_detected": null,
+      "target_device": "Intel/AMD x86_64 Host"
+    },
+    "npu": {
+      "npu_available": false,
+      "npu_type": "None",
+      "acceleration_active": false
+    }
+  },
+  "ai_runtime": {
+    "runtime_status": "ready",
+    "active_execution_provider": "CPUExecutionProvider",
+    "configured_execution_provider": "auto",
+    "fallback_occurred": false,
+    "status_reason": "Snapdragon NPU/QNN not detected. Defaulting to optimized CPUExecutionProvider.",
+    "available_execution_providers": [
+      "AzureExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "qnn_available": false,
+    "snapdragon_hardware": false,
+    "npu_available": false,
+    "models": {
+      "embedding": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "runtime": "onnxruntime",
+        "execution_provider": "CPUExecutionProvider",
+        "dimension": 384,
+        "precision": "float32",
+        "device": "cpu"
+      },
+      "llm": {
+        "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+        "runtime": "pytorch",
+        "execution_provider": "CPU",
+        "device": "cpu",
+        "precision": "float32",
+        "max_new_tokens": 128
+      }
+    },
+    "qualcomm_ai_hub": {
+      "target_architecture": "Qualcomm Hexagon NPU / Snapdragon X Elite",
+      "toolchain": "Qualcomm AI Hub SDK / QNN SDK",
+      "compilation_targets": [
+        "snapdragon_x_elite",
+        "snapdragon_x_plus"
+      ],
+      "status": "ready_for_export"
+    }
+  },
+  "embedding_benchmark": {
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "runtime": "onnxruntime",
+    "provider": "CPUExecutionProvider",
+    "single_text_avg_ms": 5.02,
+    "single_text_min_ms": 4.02,
+    "batch_size": 8,
+    "batch_avg_ms": 23.24,
+    "latency_per_chunk_ms": 2.9,
+    "throughput_chunks_per_sec": 344.3
+  },
+  "faiss_benchmark": {
+    "index_type": "IndexFlatIP",
+    "dimension": 384,
+    "indexed_vectors": 40,
+    "search_top_k": 4,
+    "avg_search_latency_ms": 1.269
+  },
+  "llm_benchmark": {
+    "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+    "device": "cpu",
+    "precision": "float32",
+    "tokens_generated": 19,
+    "generation_latency_seconds": 3.156,
+    "throughput_tokens_per_sec": 6.02,
+    "sample_output": "The Qualcomm Hexagon NPU delivers up to 45 TOPS of local compute."
+  },
+  "memory_benchmark": {
+    "process_rss_mb": 2308.91,
+    "process_rss_gb": 2.25,
+    "process_vms_mb": 5423.91,
+    "system_used_percent": 90.3
+  }
+}

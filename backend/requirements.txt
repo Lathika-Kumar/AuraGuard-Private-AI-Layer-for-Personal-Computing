@@ -11,3 +11,4 @@ httpx==0.27.2
 fastembed>=0.8.0
 transformers>=5.17.0
 torch>=2.14.0
+psutil>=5.9.0

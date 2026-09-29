@@ -8,6 +8,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from app.core.config import settings
 from app.services.retrieval_service import RetrievalService
+from app.services.hardware_service import HardwareService
 from app.database.database import get_db_connection
 
 
@@ -32,7 +33,8 @@ class AIProvider:
     """Real local on-device neural language model provider.
     
     Uses Qwen2.5-0.5B-Instruct running on local CPU via Transformers / PyTorch.
-    Designed with a modular boundary ready for Qualcomm AI Hub / QNN Execution Provider in future phases.
+    Designed with a modular boundary ready for Qualcomm AI Hub / QNN Execution Provider
+    with automatic CPU fallback and runtime hardware telemetry.
     """
     _tokenizer: AutoTokenizer | None = None
     _model: AutoModelForCausalLM | None = None
@@ -66,6 +68,21 @@ class AIProvider:
         self.tokenizer = AIProvider._tokenizer
         self.model = AIProvider._model
 
+    @property
+    def metadata(self) -> dict[str, Any]:
+        active_provider, status_reason, fallback_occurred = HardwareService.resolve_execution_provider()
+        return {
+            "model_id": self.model_id,
+            "runtime": "pytorch",
+            "active_provider": "CPU" if active_provider == "CPUExecutionProvider" else active_provider,
+            "configured_provider": getattr(settings, "ai_execution_provider", "auto"),
+            "fallback_occurred": fallback_occurred,
+            "status_reason": status_reason,
+            "device": self.device,
+            "precision": "float32",
+            "max_new_tokens": settings.llm_max_new_tokens,
+        }
+
     def generate(self, question: str, context: str) -> Tuple[str, float]:
         """Generate a strictly grounded answer from context. Returns (answer, latency_seconds)."""
         messages = [
@@ -95,6 +112,8 @@ class AIProvider:
     def answer(self, query: str, top_k: int = 4) -> dict[str, Any]:
         """Executes full Grounded RAG: Query -> Real Embedding -> FAISS -> Chunks -> Local LLM -> Answer."""
         t_total_start = time.time()
+        runtime_info = HardwareService.get_ai_runtime_info()
+        active_provider = runtime_info["active_execution_provider"]
 
         # Check if any documents exist in the database
         conn = get_db_connection()
@@ -107,7 +126,9 @@ class AIProvider:
                 "metrics": {
                     "total_latency_seconds": round(time.time() - t_total_start, 4),
                     "chunks_retrieved": 0,
+                    "execution_provider": active_provider,
                 },
+                "ai_runtime": runtime_info,
             }
 
         # Retrieve relevant chunks using real embedding + FAISS
@@ -125,7 +146,9 @@ class AIProvider:
                     "llm_latency_seconds": 0.0,
                     "total_latency_seconds": round(time.time() - t_total_start, 4),
                     "chunks_retrieved": 0,
+                    "execution_provider": active_provider,
                 },
+                "ai_runtime": runtime_info,
             }
 
         # Build context from retrieved chunks
@@ -157,5 +180,7 @@ class AIProvider:
                 "llm_latency_seconds": round(llm_lat, 4),
                 "total_latency_seconds": round(t_total, 4),
                 "chunks_retrieved": len(results),
+                "execution_provider": active_provider,
             },
+            "ai_runtime": runtime_info,
         }
