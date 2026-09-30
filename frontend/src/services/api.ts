@@ -48,6 +48,8 @@ export type SearchSource = {
   page_number: number;
   chunk_id: number;
   text?: string;
+  score?: number;
+  sensitivity?: string;
 };
 
 export type MemorySource = {
@@ -56,6 +58,7 @@ export type MemorySource = {
   content: string;
   importance: number;
   score?: number;
+  sensitivity?: string;
 };
 
 export type SearchMetrics = {
@@ -84,6 +87,71 @@ export type PrivacySummary = {
   local_guarantee?: boolean;
   policy_mode?: string;
   blocked_reason?: string;
+};
+
+export type DecisionResult = {
+  processing_mode: string;
+  privacy_mode: string;
+  sensitivity: string;
+  user_intent: string;
+  memory_allowed: boolean;
+  retrieval_allowed: boolean;
+  sensitive_data_detected: boolean;
+  execution_provider: string;
+  fallback_active: boolean;
+  network_policy: string;
+  model_id: string;
+  reason: string;
+  allowed: boolean;
+  block_reason?: string | null;
+};
+
+export type FirewallEvent = {
+  category: string;
+  reason: string;
+  action: string;
+  source: string;
+};
+
+export type TransparencyReport = {
+  model: string;
+  execution_provider: string;
+  processing_mode: string;
+  network_policy: string;
+  sensitivity: string;
+  user_intent: string;
+  sources_count: number;
+  memories_count: number;
+  privacy_checks: {
+    input: string;
+    context: string;
+    output: string;
+  };
+  firewall_events: FirewallEvent[];
+  runtime_rationale: string;
+};
+
+export type MemoryCandidate = {
+  content: string;
+  memory_type: string;
+  sensitivity: string;
+  reason: string;
+  requires_user_approval: boolean;
+};
+
+export type SearchResponse = {
+  answer: string;
+  sources: SearchSource[];
+  memories_used: MemorySource[];
+  source_types: string[];
+  query: string;
+  privacy: PrivacySummary;
+  metrics: SearchMetrics;
+  ai_runtime: any;
+  decision?: DecisionResult;
+  transparency?: TransparencyReport;
+  memory_candidate?: MemoryCandidate | null;
+  firewall_events?: FirewallEvent[];
 };
 
 export type HardwareInfo = {
@@ -155,17 +223,6 @@ export type AIRuntimeInfo = {
     compilation_targets: string[];
     status: string;
   };
-};
-
-export type SearchResponse = {
-  answer: string;
-  sources: SearchSource[];
-  memories_used?: MemorySource[];
-  source_types?: string[];
-  query: string;
-  privacy?: PrivacySummary;
-  metrics?: SearchMetrics;
-  ai_runtime?: AIRuntimeInfo;
 };
 
 export async function searchDocuments(
@@ -395,12 +452,6 @@ export type PrivacyStats = {
   external_network_calls: number;
 };
 
-export type PrivacyPolicyInfo = {
-  mode: string;
-  available_modes: string[];
-  rules: Record<string, any>;
-};
-
 export async function analyzePrivacy(text: string, mode?: string): Promise<PrivacyAnalysis> {
   const response = await fetch(`${API_BASE_URL}/api/privacy/analyze`, {
     method: 'POST',
@@ -430,6 +481,26 @@ export async function fetchPrivacyStats(): Promise<PrivacyStats> {
   return response.json();
 }
 
+export type UserPolicy = {
+  id?: number;
+  privacy_mode: 'strict' | 'balanced' | 'permissive' | string;
+  local_processing: string;
+  external_ai: string;
+  memory_mode: string;
+  sensitive_data_action: string;
+  document_retrieval: string;
+  automatic_memory: string;
+  updated_at?: string;
+};
+
+export type PrivacyPolicyInfo = {
+  mode: string;
+  privacy_mode?: string;
+  policy?: UserPolicy;
+  available_modes: string[];
+  rules: Record<string, any>;
+};
+
 export async function fetchPrivacyPolicy(): Promise<PrivacyPolicyInfo> {
   const response = await fetch(`${API_BASE_URL}/api/privacy/policy`);
   if (!response.ok) {
@@ -449,6 +520,41 @@ export async function updatePrivacyPolicy(mode: string): Promise<{ status: strin
     throw new Error(data.detail || 'Failed to update privacy policy');
   }
   return data;
+}
+
+export async function updateUserPolicy(updates: Partial<UserPolicy>): Promise<{ status: string; mode: string; policy: UserPolicy }> {
+  const response = await fetch(`${API_BASE_URL}/api/privacy/policy`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || 'Failed to update privacy policy');
+  }
+  return data;
+}
+
+export async function cleanupExpiredMemories(): Promise<{ status: string; cleaned_up: number }> {
+  const response = await fetch(`${API_BASE_URL}/api/memories/cleanup-expired`, {
+    method: 'POST',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || 'Failed to cleanup expired memories');
+  }
+  return data;
+}
+
+export async function fetchPrivacyLedger(limit: number = 50, eventType?: string): Promise<PrivacyEvent[]> {
+  const query = new URLSearchParams();
+  query.append('limit', limit.toString());
+  if (eventType) query.append('event_type', eventType);
+  const response = await fetch(`${API_BASE_URL}/api/privacy/ledger?${query.toString()}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch privacy ledger');
+  }
+  return response.json();
 }
 
 export type SecurityStatus = {

@@ -1,10 +1,15 @@
 import { FormEvent, useState } from 'react';
 import {
   searchDocuments,
+  createMemory,
   SearchSource,
   MemorySource,
   SearchMetrics,
   PrivacySummary,
+  TransparencyReport,
+  DecisionResult,
+  FirewallEvent,
+  MemoryCandidate,
 } from '../services/api';
 
 export default function AskPage() {
@@ -15,9 +20,29 @@ export default function AskPage() {
   const [sourceTypes, setSourceTypes] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<SearchMetrics | null>(null);
   const [privacy, setPrivacy] = useState<PrivacySummary | null>(null);
+  const [decision, setDecision] = useState<DecisionResult | null>(null);
+  const [transparency, setTransparency] = useState<TransparencyReport | null>(null);
+  const [firewallEvents, setFirewallEvents] = useState<FirewallEvent[]>([]);
+  const [memoryCandidate, setMemoryCandidate] = useState<MemoryCandidate | null>(null);
+  const [candidateSaved, setCandidateSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<'privacy' | 'retrieving' | 'generating' | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleSaveCandidate(candidate: MemoryCandidate) {
+    try {
+      await createMemory({
+        content: candidate.content,
+        type: candidate.memory_type,
+        importance: 0.8,
+        source: 'user_conversation',
+      });
+      setCandidateSaved(true);
+      setTimeout(() => setMemoryCandidate(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save memory');
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -30,6 +55,11 @@ export default function AskPage() {
     setSourceTypes([]);
     setMetrics(null);
     setPrivacy(null);
+    setDecision(null);
+    setTransparency(null);
+    setFirewallEvents([]);
+    setMemoryCandidate(null);
+    setCandidateSaved(false);
     setLoading(true);
     setLoadingStage('privacy');
 
@@ -44,6 +74,10 @@ export default function AskPage() {
       setSourceTypes(payload.source_types || []);
       setMetrics(payload.metrics || null);
       setPrivacy(payload.privacy || null);
+      setDecision(payload.decision || null);
+      setTransparency(payload.transparency || null);
+      setFirewallEvents(payload.firewall_events || []);
+      setMemoryCandidate(payload.memory_candidate || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
     } finally {
@@ -253,6 +287,75 @@ export default function AskPage() {
             </div>
           </div>
 
+          {/* Context Firewall Alert (Part 10) */}
+          {firewallEvents && firewallEvents.length > 0 ? (
+            <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-xs text-amber-200 shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-300 text-sm flex items-center gap-2">
+                  <span>🛡️</span> Context Firewall: Prompt Injection Neutralized
+                </span>
+                <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 border border-amber-500/30">
+                  {firewallEvents.length} Mitigated
+                </span>
+              </div>
+              <div className="mt-2 space-y-2">
+                {firewallEvents.map((evt, idx) => (
+                  <div key={idx} className="rounded bg-slate-950/70 p-2.5 border border-amber-500/30 font-mono">
+                    <div className="flex items-center justify-between text-amber-300 font-semibold">
+                      <span>{evt.category}</span>
+                      <span className="text-slate-400 font-normal">{evt.source}</span>
+                    </div>
+                    <p className="text-slate-300 mt-1">Reason: {evt.reason}</p>
+                    <p className="text-emerald-400 mt-0.5">Action: {evt.action}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Memory Candidate Consent Banner (Part 5) */}
+          {memoryCandidate ? (
+            <div className="rounded-xl border border-purple-500/50 bg-purple-500/10 p-4 text-xs text-purple-200 shadow-md">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">💡</span>
+                    <span className="font-bold text-purple-300 text-sm">Potential Memory Detected</span>
+                    <span className="rounded bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-500/30">
+                      {memoryCandidate.memory_type}
+                    </span>
+                  </div>
+                  <p className="text-slate-300">{memoryCandidate.reason}</p>
+                  <p className="font-mono text-slate-100 bg-slate-950/70 p-2 rounded border border-purple-500/30">
+                    "{memoryCandidate.content}"
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {candidateSaved ? (
+                    <span className="rounded bg-emerald-500/20 px-3 py-1.5 font-bold text-emerald-300 border border-emerald-500/30">
+                      ✓ Saved to ReMind
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleSaveCandidate(memoryCandidate)}
+                        className="rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white hover:bg-purple-500 transition shadow"
+                      >
+                        Save to ReMind
+                      </button>
+                      <button
+                        onClick={() => setMemoryCandidate(null)}
+                        className="rounded-lg bg-slate-800 px-3 py-2 text-slate-400 hover:text-slate-200 transition"
+                      >
+                        Don't Save
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {/* Answer Card */}
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
@@ -302,7 +405,78 @@ export default function AskPage() {
             </div>
           </div>
 
-          {/* Retrieved Context Details (Part 7) */}
+          {/* Signature Feature: "Why this answer?" Transparency Panel (Part 18) */}
+          {transparency ? (
+            <div className="rounded-xl border border-cyan-500/40 bg-slate-900/90 p-5 shadow-lg">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔍</span>
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                      Why this answer? — Private AI Decision &amp; Transparency
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Auditable explanation of model choice, execution runtime, data classification, and security gates.
+                    </p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300 border border-cyan-500/30">
+                  {transparency.processing_mode}
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs font-mono">
+                <div className="rounded-lg bg-slate-950 p-3 border border-slate-800">
+                  <span className="text-slate-400 uppercase text-[10px] tracking-wider block">Model</span>
+                  <span className="text-slate-100 font-bold mt-1 block truncate">{transparency.model}</span>
+                  <span className="text-[11px] text-emerald-400 mt-1 block">Local PyTorch / ONNX</span>
+                </div>
+
+                <div className="rounded-lg bg-slate-950 p-3 border border-slate-800">
+                  <span className="text-slate-400 uppercase text-[10px] tracking-wider block">Execution Provider</span>
+                  <span className="text-cyan-300 font-bold mt-1 block">{transparency.execution_provider}</span>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    {transparency.execution_provider === 'QNNExecutionProvider' ? 'Qualcomm Hexagon NPU' : 'Intel CPU Multi-threaded'}
+                  </span>
+                </div>
+
+                <div className="rounded-lg bg-slate-950 p-3 border border-slate-800">
+                  <span className="text-slate-400 uppercase text-[10px] tracking-wider block">Data Sensitivity</span>
+                  <span
+                    className={`font-bold mt-1 block ${
+                      transparency.sensitivity === 'SECRET'
+                        ? 'text-red-400'
+                        : transparency.sensitivity === 'SENSITIVE'
+                        ? 'text-amber-400'
+                        : 'text-emerald-400'
+                    }`}
+                  >
+                    {transparency.sensitivity}
+                  </span>
+                  <span className="text-[11px] text-slate-400 mt-1 block">Intent: {transparency.user_intent}</span>
+                </div>
+
+                <div className="rounded-lg bg-slate-950 p-3 border border-slate-800">
+                  <span className="text-slate-400 uppercase text-[10px] tracking-wider block">Privacy Safeguards</span>
+                  <span className="text-emerald-400 font-bold mt-1 block">
+                    In: {transparency.privacy_checks.input} &bull; Out: {transparency.privacy_checks.output}
+                  </span>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    Context: {transparency.privacy_checks.context}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-lg bg-slate-950/80 p-3 border border-slate-800 text-xs">
+                <span className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider block">
+                  Runtime Rationale:
+                </span>
+                <p className="text-slate-200 mt-0.5 leading-relaxed">{transparency.runtime_rationale}</p>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Retrieved Context Details */}
           {sources.length > 0 || memoriesUsed.length > 0 ? (
             <details className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-300">
               <summary className="cursor-pointer font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200 transition">
@@ -325,7 +499,7 @@ export default function AskPage() {
             </details>
           ) : null}
 
-          {/* Attributed Document Sources (Part 9 Transparency) */}
+          {/* Attributed Document Sources (Part 8 Source-Aware RAG) */}
           {sources.length > 0 ? (
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
               <p className="border-b border-slate-800 pb-3 font-semibold uppercase tracking-wider text-cyan-400 flex items-center justify-between">
@@ -349,9 +523,17 @@ export default function AskPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between border-t border-slate-800/80 pt-2 text-xs font-mono text-slate-400">
+                    <div className="mt-3 flex flex-wrap items-center justify-between border-t border-slate-800/80 pt-2 text-xs font-mono text-slate-400 gap-1">
                       <span className="rounded bg-slate-800 px-2 py-0.5 font-medium text-cyan-300">
                         Page: {src.page_number}
+                      </span>
+                      {src.score ? (
+                        <span className="text-slate-400 text-[11px]">
+                          Match: {Math.round(src.score * 100)}%
+                        </span>
+                      ) : null}
+                      <span className="rounded bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-emerald-400 border border-emerald-500/20">
+                        {src.sensitivity ?? 'PERSONAL'}
                       </span>
                       <span>Chunk #{src.chunk_id}</span>
                     </div>

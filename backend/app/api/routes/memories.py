@@ -16,6 +16,7 @@ class MemoryCreateRequest(BaseModel):
     importance: float = Field(default=0.5, ge=0.0, le=1.0)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     expires_at: Optional[str] = Field(default=None, description="ISO-8601 expiration timestamp")
+    expiration_mode: Optional[str] = Field(default=None, description="Preset expiration: never, 7_days, 30_days, 90_days, custom")
     source: str = Field(default="user")
 
 
@@ -53,17 +54,28 @@ async def list_memories(
 @router.post("", status_code=201)
 async def create_memory(payload: MemoryCreateRequest) -> dict[str, Any]:
     """Explicitly creates a new user memory in ReMind after privacy verification."""
+    expires_at = payload.expires_at
+    if payload.expiration_mode and not expires_at:
+        expires_at = RemindService.calculate_expiration_timestamp(payload.expiration_mode)
+
     try:
         return remind_service.create_memory(
             content=payload.content,
             memory_type=payload.type,
             importance=payload.importance,
             confidence=payload.confidence,
-            expires_at=payload.expires_at,
+            expires_at=expires_at,
             source=payload.source,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/cleanup-expired")
+async def cleanup_expired() -> dict[str, Any]:
+    """Finds and purges all expired memories from active vector search (Part 7)."""
+    count = remind_service.cleanup_expired_memories()
+    return {"status": "ok", "cleaned_up": count}
 
 
 @router.get("/{memory_id}")

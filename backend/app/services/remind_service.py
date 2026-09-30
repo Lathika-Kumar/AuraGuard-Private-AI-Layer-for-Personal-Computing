@@ -412,3 +412,48 @@ class RemindService:
             conn.close()
 
         return results, embed_lat, search_lat
+
+    @staticmethod
+    def calculate_expiration_timestamp(mode: str, custom_iso: Optional[str] = None) -> Optional[str]:
+        """Calculates ISO expiration timestamp based on preset mode (Part 7)."""
+        from datetime import datetime, timezone, timedelta
+        mode_clean = mode.lower().strip()
+        now = datetime.now(timezone.utc)
+        if mode_clean in ("never", "none", ""):
+            return None
+        elif mode_clean in ("7_days", "7d", "7 days"):
+            return (now + timedelta(days=7)).isoformat()
+        elif mode_clean in ("30_days", "30d", "30 days"):
+            return (now + timedelta(days=30)).isoformat()
+        elif mode_clean in ("90_days", "90d", "90 days"):
+            return (now + timedelta(days=90)).isoformat()
+        elif mode_clean == "custom":
+            return custom_iso
+        return None
+
+    def cleanup_expired_memories(self) -> int:
+        """Finds all active memories past their expiration date and marks them expired.
+
+        Rebuilds the FAISS memory index if any expired memories were purged from active search.
+        Returns count of cleaned up memories.
+        """
+        conn = get_db_connection()
+        try:
+            rows = conn.execute("SELECT id, expires_at FROM memories WHERE status = 'active' AND expires_at IS NOT NULL").fetchall()
+            expired_ids = []
+            for r in rows:
+                if self._is_expired(r["expires_at"]):
+                    expired_ids.append(r["id"])
+
+            if not expired_ids:
+                return 0
+
+            placeholders = ", ".join("?" for _ in expired_ids)
+            conn.execute(f"UPDATE memories SET status = 'expired' WHERE id IN ({placeholders})", expired_ids)
+            conn.commit()
+
+            # Rebuild FAISS index so expired memories are purged from vector search
+            self.rebuild_memory_index(conn=conn)
+            return len(expired_ids)
+        finally:
+            conn.close()

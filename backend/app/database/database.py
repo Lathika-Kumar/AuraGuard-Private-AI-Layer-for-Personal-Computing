@@ -110,6 +110,33 @@ def init_db() -> None:
             """
         )
 
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_policies (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                privacy_mode TEXT NOT NULL DEFAULT 'balanced',
+                local_processing TEXT NOT NULL DEFAULT 'ON',
+                external_ai TEXT NOT NULL DEFAULT 'BLOCKED',
+                memory_mode TEXT NOT NULL DEFAULT 'ASK',
+                sensitive_data_action TEXT NOT NULL DEFAULT 'BLOCK',
+                document_retrieval TEXT NOT NULL DEFAULT 'ON',
+                automatic_memory TEXT NOT NULL DEFAULT 'OFF',
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
+        # Seed default policy if missing
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO user_policies (
+                id, privacy_mode, local_processing, external_ai,
+                memory_mode, sensitive_data_action, document_retrieval,
+                automatic_memory, updated_at
+            ) VALUES (1, 'balanced', 'ON', 'BLOCKED', 'ASK', 'BLOCK', 'ON', 'OFF', CURRENT_TIMESTAMP)
+            """
+        )
+
         _add_column_if_missing(conn, "documents", "pages", "pages INTEGER DEFAULT 0")
         _add_column_if_missing(conn, "document_chunks", "page_number", "page_number INTEGER NOT NULL DEFAULT 1")
         _add_column_if_missing(conn, "document_chunks", "character_count", "character_count INTEGER NOT NULL DEFAULT 0")
@@ -134,14 +161,60 @@ def init_db() -> None:
         migrate_to_encrypted_storage(conn)
 
 
+def get_user_policy() -> dict[str, Any]:
+    with get_db_connection() as conn:
+        row = conn.execute("SELECT * FROM user_policies WHERE id = 1").fetchone()
+        if not row:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO user_policies (
+                    id, privacy_mode, local_processing, external_ai,
+                    memory_mode, sensitive_data_action, document_retrieval,
+                    automatic_memory, updated_at
+                ) VALUES (1, 'balanced', 'ON', 'BLOCKED', 'ASK', 'BLOCK', 'ON', 'OFF', CURRENT_TIMESTAMP)
+                """
+            )
+            conn.commit()
+            row = conn.execute("SELECT * FROM user_policies WHERE id = 1").fetchone()
+        return dict(row)
+
+
+def save_user_policy(policy_updates: dict[str, Any]) -> dict[str, Any]:
+    allowed_keys = {
+        "privacy_mode",
+        "local_processing",
+        "external_ai",
+        "memory_mode",
+        "sensitive_data_action",
+        "document_retrieval",
+        "automatic_memory",
+    }
+    updates = []
+    params = []
+    for k, v in policy_updates.items():
+        if k in allowed_keys and v is not None:
+            updates.append(f"{k} = ?")
+            params.append(str(v))
+
+    if updates:
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        with get_db_connection() as conn:
+            conn.execute(f"UPDATE user_policies SET {', '.join(updates)} WHERE id = 1", params)
+            conn.commit()
+
+    return get_user_policy()
+
+
 def get_dashboard_stats() -> dict[str, Any]:
     with get_db_connection() as conn:
         documents = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
         memories = conn.execute("SELECT COUNT(*) FROM memories WHERE status = 'active'").fetchone()[0]
         privacy_events = conn.execute("SELECT COUNT(*) FROM privacy_events").fetchone()[0]
+        policy = get_user_policy()
         return {
             "documents_indexed": documents,
             "memories_stored": memories,
             "privacy_events": privacy_events,
-            "privacy_mode": settings.privacy_mode,
+            "privacy_mode": policy.get("privacy_mode", settings.privacy_mode),
+            "policy": policy,
         }

@@ -6,6 +6,7 @@ import {
   deleteMemory,
   archiveMemory,
   analyzePrivacy,
+  cleanupExpiredMemories,
   MemoryItem,
   PrivacyAnalysis,
 } from '../services/api';
@@ -183,12 +184,28 @@ export default function MemoryPage() {
             Explicit, user-controlled local memory. Never sent to cloud AI or external analytics.
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-        >
-          + Add Memory
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const res = await cleanupExpiredMemories();
+                setDeletionNotice(`Cleaned up ${res.cleaned_up} expired memories.`);
+                await loadMemories();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Cleanup failed');
+              }
+            }}
+            className="rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 py-2 text-xs font-semibold text-cyan-300 transition"
+          >
+            Prune Expired
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+          >
+            + Add Memory
+          </button>
+        </div>
       </header>
 
       {deletionNotice ? (
@@ -432,13 +449,39 @@ export default function MemoryPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Expires At (Optional)
+                    Expiration Policy
                   </label>
+                  <select
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const now = new Date();
+                      if (val === 'never') {
+                        setFormExpiresAt('');
+                      } else if (val === '7_days') {
+                        now.setDate(now.getDate() + 7);
+                        setFormExpiresAt(now.toISOString().slice(0, 16));
+                      } else if (val === '30_days') {
+                        now.setDate(now.getDate() + 30);
+                        setFormExpiresAt(now.toISOString().slice(0, 16));
+                      } else if (val === '90_days') {
+                        now.setDate(now.getDate() + 90);
+                        setFormExpiresAt(now.toISOString().slice(0, 16));
+                      }
+                    }}
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-xs text-slate-200 outline-none focus:border-cyan-500 mb-2"
+                  >
+                    <option value="never">Never (Persistent)</option>
+                    <option value="7_days">7 Days</option>
+                    <option value="30_days">30 Days</option>
+                    <option value="90_days">90 Days</option>
+                    <option value="custom">Custom Date & Time</option>
+                  </select>
                   <input
                     type="datetime-local"
                     value={formExpiresAt}
                     onChange={(e) => setFormExpiresAt(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-xs text-slate-200 outline-none focus:border-cyan-500"
+                    placeholder="Custom ISO timestamp"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 p-1.5 text-xs text-slate-200 outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>

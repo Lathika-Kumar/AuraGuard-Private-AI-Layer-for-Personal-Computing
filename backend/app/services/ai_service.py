@@ -13,6 +13,8 @@ from app.services.remind_service import RemindService
 from app.services.privacy_service import PrivacyAction, PrivacyClassification, PrivacyService
 from app.services.output_guard import OutputGuard
 from app.services.hardware_service import HardwareService
+from app.services.decision_service import PrivateAIDecisionService
+from app.services.context_firewall import ContextFirewall
 from app.database.database import get_db_connection
 
 
@@ -153,32 +155,53 @@ class AIProvider:
         active_provider = runtime_info["active_execution_provider"]
 
         # ==========================================
+        # 0. PRIVATE AI DECISION LAYER
+        # ==========================================
+        policy_override = {"privacy_mode": policy_mode} if policy_mode else None
+        decision = PrivateAIDecisionService.evaluate(query, policy_override=policy_override)
+
+        # ==========================================
         # 1. PRIVACY CHECKPOINT 1: INPUT SCAN
         # ==========================================
         t_priv_0 = time.time()
-        input_analysis = PrivacyService.analyze(query, mode=policy_mode, stage="input")
+        input_analysis = PrivacyService.analyze(query, mode=decision.privacy_mode, stage="input")
         t_priv_input = time.time() - t_priv_0
 
-        if not input_analysis.allowed:
+        if not decision.allowed or not input_analysis.allowed:
+            block_msg = decision.block_reason or input_analysis.block_reason or "Sensitive content blocked by policy"
             # Blocked request
             PrivacyService.log_event(
-                event_type="REQUEST_BLOCKED",
+                event_type="SENSITIVE_DATA_BLOCKED",
                 severity="HIGH",
                 source="ask_input",
-                description=f"Query rejected: {input_analysis.block_reason}",
+                description=f"Query rejected by Private AI Decision Layer: {block_msg}",
                 action="BLOCK",
             )
             return {
-                "answer": f"Request blocked by AuraGuard Privacy Engine: {input_analysis.block_reason}.",
+                "answer": f"Request blocked by AuraGuard Privacy Engine: {block_msg}.",
                 "sources": [],
                 "memories_used": [],
                 "source_types": [],
                 "query": query,
+                "decision": decision.to_dict(),
+                "transparency": {
+                    "model": runtime_info.get("llm_model", settings.llm_model),
+                    "execution_provider": active_provider,
+                    "processing_mode": decision.processing_mode,
+                    "network_policy": decision.network_policy,
+                    "sensitivity": decision.sensitivity,
+                    "user_intent": decision.user_intent,
+                    "sources_count": 0,
+                    "memories_count": 0,
+                    "privacy_checks": {"input": "BLOCKED", "context": "SKIPPED", "output": "SKIPPED"},
+                    "firewall_events": [],
+                    "runtime_rationale": decision.reason,
+                },
                 "privacy": {
                     "input_scanned": True,
                     "input_status": "blocked",
                     "classification": input_analysis.classification.value,
-                    "block_reason": input_analysis.block_reason,
+                    "block_reason": block_msg,
                     "entities_detected": len(input_analysis.entities),
                     "context_redacted": False,
                     "output_guarded": False,
@@ -207,6 +230,20 @@ class AIProvider:
                 "memories_used": [],
                 "source_types": [],
                 "query": query,
+                "decision": decision.to_dict(),
+                "transparency": {
+                    "model": runtime_info.get("llm_model", settings.llm_model),
+                    "execution_provider": active_provider,
+                    "processing_mode": decision.processing_mode,
+                    "network_policy": decision.network_policy,
+                    "sensitivity": decision.sensitivity,
+                    "user_intent": decision.user_intent,
+                    "sources_count": 0,
+                    "memories_count": 0,
+                    "privacy_checks": {"input": "PASS", "context": "EMPTY", "output": "EMPTY"},
+                    "firewall_events": [],
+                    "runtime_rationale": decision.reason,
+                },
                 "privacy": {
                     "input_scanned": True,
                     "input_status": "allowed",
@@ -226,14 +263,20 @@ class AIProvider:
             }
 
         # ==========================================
-        # 2. DOCUMENT RETRIEVAL
+        # 2. DOCUMENT RETRIEVAL (Governed by Decision)
         # ==========================================
-        doc_results, embed_doc_lat, doc_search_lat = self.retriever.search(query, top_k=top_k_docs)
+        if decision.retrieval_allowed:
+            doc_results, embed_doc_lat, doc_search_lat = self.retriever.search(query, top_k=top_k_docs)
+        else:
+            doc_results, embed_doc_lat, doc_search_lat = [], 0.0, 0.0
 
         # ==========================================
-        # 3. MEMORY RETRIEVAL (ReMind)
+        # 3. MEMORY RETRIEVAL (Governed by Decision)
         # ==========================================
-        mem_results, embed_mem_lat, mem_search_lat = self.remind.search_memories(query, top_k=top_k_memories)
+        if decision.memory_allowed:
+            mem_results, embed_mem_lat, mem_search_lat = self.remind.search_memories(query, top_k=top_k_memories)
+        else:
+            mem_results, embed_mem_lat, mem_search_lat = [], 0.0, 0.0
 
         # If neither documents nor memories matched
         if not doc_results and not mem_results:
@@ -243,6 +286,20 @@ class AIProvider:
                 "memories_used": [],
                 "source_types": [],
                 "query": query,
+                "decision": decision.to_dict(),
+                "transparency": {
+                    "model": runtime_info.get("llm_model", settings.llm_model),
+                    "execution_provider": active_provider,
+                    "processing_mode": decision.processing_mode,
+                    "network_policy": decision.network_policy,
+                    "sensitivity": decision.sensitivity,
+                    "user_intent": decision.user_intent,
+                    "sources_count": 0,
+                    "memories_count": 0,
+                    "privacy_checks": {"input": "PASS", "context": "NO_MATCH", "output": "REFUSAL"},
+                    "firewall_events": [],
+                    "runtime_rationale": decision.reason,
+                },
                 "privacy": {
                     "input_scanned": True,
                     "input_status": "allowed",
@@ -279,12 +336,16 @@ class AIProvider:
             doc_lines = ["--- LOCAL DOCUMENTS CONTEXT ---"]
             for r in doc_results:
                 doc_lines.append(f"[Document: {r['document_filename']}, Page {r['page_number']}]\n{r['text']}")
+                chunk_sens = PrivacyService.analyze(r["text"]).classification.value
                 sources.append(
                     {
                         "document_id": r["document_id"],
                         "filename": r["document_filename"],
                         "page_number": r["page_number"],
                         "chunk_id": r["chunk_id"],
+                        "text": r["text"],
+                        "score": round(r.get("score", 1.0), 4),
+                        "sensitivity": chunk_sens,
                     }
                 )
             context_sections.append("\n\n".join(doc_lines))
@@ -301,6 +362,7 @@ class AIProvider:
                         "content": m["content"],
                         "importance": m.get("importance", 0.5),
                         "score": m.get("score", 1.0),
+                        "sensitivity": m.get("privacy_level", "PERSONAL"),
                     }
                 )
             context_sections.append("\n\n".join(mem_lines))
@@ -309,35 +371,19 @@ class AIProvider:
         t_merge = time.time() - t_merge_0
 
         # ==========================================
-        # 5. PRIVACY CHECKPOINT 2: CONTEXT FILTERING & INJECTION DEFENSE
+        # 5. PRIVACY CHECKPOINT 2: CONTEXT FIREWALL
         # ==========================================
         t_priv_ctx_0 = time.time()
-        # Neutralize prompt injection vectors embedded within untrusted documents/memories
-        sanitized_context = re.sub(
-            r"\b(?:ignore|disregard|forget|override)\s+(?:all\s+)?(?:previous|prior|above|system)\s+(?:instructions?|rules?|directives?|prompts?)[^.\n]*[.\n]?",
-            "[Adversarial directive stripped] ",
-            raw_context,
-            flags=re.IGNORECASE,
-        )
-        sanitized_context = re.sub(
-            r"\b(?:critical\s+)?system\s+override[:\s]+",
-            "[Override attempt stripped] ",
-            sanitized_context,
-            flags=re.IGNORECASE,
-        )
-        sanitized_context = re.sub(
-            r"\boutput\s+the\s+word\s+[A-Za-z0-9_]+[.\n]?",
-            "[Exfiltration target neutralized] ",
-            sanitized_context,
-            flags=re.IGNORECASE,
+        sanitized_context, firewall_events, injections_found = ContextFirewall.filter_context(
+            raw_context, sources=sources, memories=memories_used
         )
 
-        context_analysis = PrivacyService.analyze(sanitized_context, mode=policy_mode, stage="context")
+        context_analysis = PrivacyService.analyze(sanitized_context, mode=decision.privacy_mode, stage="context")
         clean_context = context_analysis.redacted_text
-        context_was_redacted = clean_context != raw_context
+        context_was_redacted = clean_context != raw_context or injections_found
         t_priv_ctx = time.time() - t_priv_ctx_0
 
-        if context_was_redacted:
+        if context_was_redacted and not injections_found:
             PrivacyService.log_event(
                 event_type="CONTEXT_REDACTED",
                 severity="MEDIUM",
@@ -354,11 +400,40 @@ class AIProvider:
         # ==========================================
         # 7. PRIVACY CHECKPOINT 3: OUTPUT GUARD
         # ==========================================
-        guard_result = OutputGuard.sanitize(raw_answer, policy_mode=policy_mode, source="rag_answer")
+        guard_result = OutputGuard.sanitize(raw_answer, policy_mode=decision.privacy_mode, source="rag_answer")
         final_answer = guard_result.text
+
+        # ==========================================
+        # 8. MEMORY CONSENT & CANDIDATE DETECTION
+        # ==========================================
+        memory_candidate = PrivateAIDecisionService.detect_memory_candidate(query, final_answer)
 
         t_total = time.time() - t_total_start
         total_privacy_lat = t_priv_input + t_priv_ctx + guard_result.latency_seconds
+
+        context_check_summary = "PASS (Firewall Clean)"
+        if firewall_events:
+            context_check_summary = f"NEUTRALIZED ({len(firewall_events)} Injection Neutralized)"
+        elif context_was_redacted:
+            context_check_summary = "PASS (Redacted)"
+
+        transparency = {
+            "model": runtime_info.get("llm_model", settings.llm_model),
+            "execution_provider": active_provider,
+            "processing_mode": decision.processing_mode,
+            "network_policy": decision.network_policy,
+            "sensitivity": decision.sensitivity,
+            "user_intent": decision.user_intent,
+            "sources_count": len(sources),
+            "memories_count": len(memories_used),
+            "privacy_checks": {
+                "input": "PASS",
+                "context": context_check_summary,
+                "output": "PASS" if not guard_result.was_modified else "REDACTED",
+            },
+            "firewall_events": firewall_events,
+            "runtime_rationale": decision.reason,
+        }
 
         return {
             "answer": final_answer,
@@ -366,6 +441,10 @@ class AIProvider:
             "memories_used": memories_used,
             "source_types": source_types,
             "query": query,
+            "decision": decision.to_dict(),
+            "transparency": transparency,
+            "memory_candidate": memory_candidate,
+            "firewall_events": firewall_events,
             "privacy": {
                 "input_scanned": True,
                 "input_status": "allowed",

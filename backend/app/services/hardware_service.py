@@ -24,6 +24,7 @@ class HardwareService:
 
     _cached_cpu_name: str | None = None
     _cached_gpu_name: str | None = None
+    _cached_npu_available: bool | None = None
 
     @classmethod
     def get_cpu_brand(cls) -> str:
@@ -107,13 +108,17 @@ class HardwareService:
     @classmethod
     def is_npu_available(cls) -> bool:
         """Checks if a Qualcomm Hexagon NPU or hardware NPU is actively available."""
+        if cls._cached_npu_available is not None:
+            return cls._cached_npu_available
+
         # Check if QNN Execution Provider is registered in ONNX Runtime
         providers = cls.get_available_execution_providers()
         if "QNNExecutionProvider" in providers:
+            cls._cached_npu_available = True
             return True
 
-        # Check Windows PNP / CIM instances for Hexagon NPU if on Windows
-        if platform.system() == "Windows":
+        # Check Windows PNP / CIM instances for Hexagon NPU only on Snapdragon / ARM64 Windows
+        if platform.system() == "Windows" and cls.is_snapdragon():
             try:
                 res = subprocess.run(
                     ["powershell", "-NoProfile", "-Command", "Get-PnpDevice -Class 'ComputeAccelerator' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FriendlyName"],
@@ -122,10 +127,12 @@ class HardwareService:
                     timeout=3,
                 )
                 if res.returncode == 0 and "Hexagon" in res.stdout:
+                    cls._cached_npu_available = True
                     return True
             except Exception:
                 pass
 
+        cls._cached_npu_available = False
         return False
 
     @classmethod

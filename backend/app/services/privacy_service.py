@@ -14,6 +14,7 @@ class PrivacyClassification(str, Enum):
     PUBLIC = "PUBLIC"
     PERSONAL = "PERSONAL"
     SENSITIVE = "SENSITIVE"
+    SECRET = "SECRET"
     HIGHLY_SENSITIVE = "HIGHLY_SENSITIVE"
 
 
@@ -337,6 +338,7 @@ class PrivacyService:
             PrivacyClassification.PUBLIC: 0,
             PrivacyClassification.PERSONAL: 1,
             PrivacyClassification.SENSITIVE: 2,
+            PrivacyClassification.SECRET: 3,
             PrivacyClassification.HIGHLY_SENSITIVE: 3,
         }
         entities.sort(key=lambda e: (e.start, -rank[e.classification], -(e.end - e.start)))

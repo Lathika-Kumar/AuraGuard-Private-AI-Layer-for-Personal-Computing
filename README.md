@@ -1,46 +1,51 @@
 # AuraGuard — Private AI Layer for Personal Computing
 
-> **AuraGuard is a privacy-first local AI layer for personal computing.**
-> It combines local document intelligence, user-controlled memory, privacy filtering, encrypted storage, and hardware-aware AI execution so personal AI workloads can remain on the user's device.
+> **AuraGuard is not simply a local chatbot.**
+>
+> **It is a privacy-aware AI layer for personal computing.**
+>
+> It determines how personal data should be processed, what should be remembered, what should be blocked, which local AI runtime should execute the request, and what evidence should be shown to the user.
 
 ```text
-                  AURAGUARD
-                      │
-        ┌─────────────┼─────────────┐
-        │             │             │
-     Documents      ReMind       Privacy
-        │             │          Engine
-        │             │             │
-        └───────┬─────┴─────────────┘
-                ↓
-          Local Retrieval (FAISS)
-                ↓
-        Context Construction
-                ↓
-          Privacy Filter
-                ↓
-           Local AI
-                ↓
-       ┌────────┴────────┐
-       │                 │
-      CPU               QNN (Snapdragon-Ready)
-                          ↓
-                    Snapdragon NPU*
-                ↓
-          Output Privacy Guard
-                ↓
-              Answer
+                  AURAGUARD PRIVATE AI DECISION LAYER
+                                  │
+         ┌────────────────────────┼────────────────────────┐
+         │                        │                        │
+    User Query            Document Context         ReMind Memories
+         │                        │                        │
+         ↓                        ↓                        ↓
+  Input Privacy Guard     FAISS Local Retrieval   Encrypted AES-256 Storage
+         │                        │                        │
+         └────────────────────────┼────────────────────────┘
+                                  ↓
+                     Private AI Decision Engine
+             (Sensitivity / Intent / Hardware / Policy)
+                                  ↓
+                           Context Firewall
+               (Prompt-Injection Neutralization & Audit)
+                                  ↓
+                    Hardware-Aware Local AI Routing
+                   ┌──────────────┴──────────────┐
+                   │                             │
+         CPUExecutionProvider          QNNExecutionProvider
+         (Verified Intel/AMD)          (Snapdragon Hexagon NPU*)
+                   │                             │
+                   └──────────────┬──────────────┘
+                                  ↓
+                         Output Privacy Guard
+                                  ↓
+                     Transparency Panel ("Why this answer?")
 ```
 
-*\*Note on Snapdragon NPU: AuraGuard includes a Qualcomm QNN deployment path for Snapdragon X Series systems. Physical Snapdragon NPU performance must be measured on compatible hardware and is not represented by the Intel baseline.*
+*\*Note on Snapdragon NPU: AuraGuard includes a verified Qualcomm QNN deployment path for Snapdragon X Series systems. Physical Snapdragon NPU acceleration requires compatible Snapdragon hardware and is not simulated on Intel host environments.*
 
 ---
 
 ## 1. What is AuraGuard?
 
-**AuraGuard** is a privacy-first local AI layer for personal computing. It enables users to index sensitive personal documents, retain private conversational memories, and query a local Large Language Model (Qwen2.5-0.5B-Instruct) with complete data sovereignty.
+**AuraGuard** is an adaptive, privacy-aware AI layer for personal computing. Rather than operating as an unconstrained chatbot, AuraGuard functions as an intelligent guardian that decides at runtime how sensitive personal information should be processed, remembered, retrieved, and protected.
 
-All embeddings, retrieval, privacy filtering, and generative reasoning happen entirely on the local device, with zero cloud dependency, zero external API keys, and zero telemetry.
+All embeddings, retrieval, privacy filtering, context firewalling, and generative reasoning happen entirely on the local device (`127.0.0.1`), with zero cloud dependency, zero external API keys, and zero telemetry egress.
 
 ---
 
