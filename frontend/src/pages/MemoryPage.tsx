@@ -32,6 +32,9 @@ export default function MemoryPage() {
   const [saving, setSaving] = useState(false);
   const [privacyPreview, setPrivacyPreview] = useState<PrivacyAnalysis | null>(null);
 
+  const [userConfirmed, setUserConfirmed] = useState(false);
+  const [deletionNotice, setDeletionNotice] = useState<string | null>(null);
+
   const loadMemories = async () => {
     try {
       setLoading(true);
@@ -78,6 +81,7 @@ export default function MemoryPage() {
     setFormImportance(0.7);
     setFormExpiresAt('');
     setPrivacyPreview(null);
+    setUserConfirmed(false);
     setIsModalOpen(true);
   };
 
@@ -88,12 +92,13 @@ export default function MemoryPage() {
     setFormImportance(mem.importance);
     setFormExpiresAt(mem.expires_at ? mem.expires_at.slice(0, 16) : '');
     setPrivacyPreview(null);
+    setUserConfirmed(true);
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formContent.trim()) return;
+    if (!formContent.trim() || !userConfirmed) return;
 
     try {
       setSaving(true);
@@ -125,12 +130,14 @@ export default function MemoryPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete this memory permanently? Its vector representation will also be expunged.')) {
+    if (!window.confirm('Delete this memory permanently? Its vector representation and encrypted record will be completely expunged.')) {
       return;
     }
     try {
       await deleteMemory(id);
       await loadMemories();
+      setDeletionNotice('Memory deleted successfully. Encrypted database record, metadata, and FAISS vector removed.');
+      setTimeout(() => setDeletionNotice(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed');
     }
@@ -183,6 +190,16 @@ export default function MemoryPage() {
           + Add Memory
         </button>
       </header>
+
+      {deletionNotice ? (
+        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-emerald-200 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span>✓</span>
+            <span>{deletionNotice}</span>
+          </div>
+          <button onClick={() => setDeletionNotice(null)} className="text-emerald-400 hover:text-white text-xs">Dismiss</button>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-200">{error}</div>
@@ -426,6 +443,42 @@ export default function MemoryPage() {
                 </div>
               </div>
 
+              {/* Part 11: Explicit Storage Approval & Summary Review */}
+              <div className="rounded-lg border border-slate-800 bg-slate-950/80 p-3.5 space-y-2 text-xs">
+                <p className="font-semibold text-slate-300 uppercase tracking-wider text-[11px]">
+                  Memory Storage Review & Approval
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400 font-mono">
+                  <div>
+                    <span className="text-slate-500">Storage Protection:</span>{' '}
+                    <span className="text-emerald-400">AES-256-GCM + DPAPI</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Classification:</span>{' '}
+                    <span className="text-cyan-300">{privacyPreview?.classification || 'PERSONAL'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Importance:</span>{' '}
+                    <span className="text-slate-200">{Math.round(formImportance * 100)}%</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Expiration:</span>{' '}
+                    <span className="text-slate-200">{formExpiresAt ? new Date(formExpiresAt).toLocaleString() : 'Never expires'}</span>
+                  </div>
+                </div>
+                <label className="flex items-center space-x-2 pt-2 border-t border-slate-800/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={userConfirmed}
+                    onChange={(e) => setUserConfirmed(e.target.checked)}
+                    className="rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-0 accent-cyan-400"
+                  />
+                  <span className="text-xs text-slate-300 select-none">
+                    I explicitly approve storing this memory in ReMind encrypted storage.
+                  </span>
+                </label>
+              </div>
+
               <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button
                   type="button"
@@ -436,10 +489,10 @@ export default function MemoryPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || (privacyPreview !== null && !privacyPreview.allowed)}
+                  disabled={saving || !userConfirmed || (privacyPreview !== null && !privacyPreview.allowed)}
                   className="rounded-lg bg-cyan-500 px-5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-50"
                 >
-                  {saving ? 'Saving...' : editingMemory ? 'Save Changes' : 'Store Memory'}
+                  {saving ? 'Encrypting & Storing...' : editingMemory ? 'Save Changes' : 'Confirm & Store Memory'}
                 </button>
               </div>
             </form>

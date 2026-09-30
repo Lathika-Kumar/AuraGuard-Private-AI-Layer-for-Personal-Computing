@@ -1,0 +1,66 @@
+{
+  "benchmark": "end_to_end_rag",
+  "hardware_context": {
+    "timestamp_utc": "2026-09-30T03:56:22.504603+00:00",
+    "cpu_brand": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "architecture": "AMD64",
+    "physical_cores": 10,
+    "logical_cores": 12,
+    "total_ram_gb": 7.65,
+    "os_platform": "Windows-11-10.0.26200-SP0",
+    "snapdragon_detected": false,
+    "npu_available": false,
+    "qnn_available": false,
+    "execution_provider": "CPUExecutionProvider"
+  },
+  "iterations": 2,
+  "stages_ms": {
+    "total_pipeline": {
+      "mean_ms": 13835.4687,
+      "median_ms": 13835.4687,
+      "p95_ms": 18505.0442,
+      "min_ms": 9165.8932,
+      "max_ms": 18505.0442
+    },
+    "privacy_engine": {
+      "mean_ms": 1.7,
+      "median_ms": 1.7,
+      "p95_ms": 1.8,
+      "min_ms": 1.6,
+      "max_ms": 1.8
+    },
+    "embedding": {
+      "mean_ms": 31.05,
+      "median_ms": 31.05,
+      "p95_ms": 38.4,
+      "min_ms": 23.7,
+      "max_ms": 38.4
+    },
+    "document_retrieval": {
+      "mean_ms": 0.0,
+      "median_ms": 0.0,
+      "p95_ms": 0.0,
+      "min_ms": 0.0,
+      "max_ms": 0.0
+    },
+    "memory_retrieval": {
+      "mean_ms": 0.1,
+      "median_ms": 0.1,
+      "p95_ms": 0.1,
+      "min_ms": 0.1,
+      "max_ms": 0.1
+    },
+    "llm_generation": {
+      "mean_ms": 12001.55,
+      "median_ms": 12001.55,
+      "p95_ms": 16560.1,
+      "min_ms": 7443.0,
+      "max_ms": 16560.1
+    }
+  },
+  "memory": {
+    "ram_before_mb": 998.27,
+    "ram_after_mb": 1047.82,
+    "ram_delta_mb": 49.56
+  }
+}

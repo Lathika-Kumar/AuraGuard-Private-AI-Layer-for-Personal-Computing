@@ -1,0 +1,59 @@
+{
+  "benchmark": "aes_256_gcm_encryption",
+  "hardware_context": {
+    "timestamp_utc": "2026-09-30T03:54:12.227761+00:00",
+    "cpu_brand": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "architecture": "AMD64",
+    "physical_cores": 10,
+    "logical_cores": 12,
+    "total_ram_gb": 7.65,
+    "os_platform": "Windows-11-10.0.26200-SP0",
+    "snapdragon_detected": false,
+    "npu_available": false,
+    "qnn_available": false,
+    "execution_provider": "CPUExecutionProvider"
+  },
+  "algorithm": "AES-256-GCM",
+  "key_protection": "Windows DPAPI",
+  "iterations": 50,
+  "chunk_encryption_2kb": {
+    "mean_ms": 0.0083,
+    "median_ms": 0.0081,
+    "p95_ms": 0.0092,
+    "min_ms": 0.0078,
+    "max_ms": 0.0162
+  },
+  "chunk_decryption_2kb": {
+    "mean_ms": 0.007,
+    "median_ms": 0.0077,
+    "p95_ms": 0.0078,
+    "min_ms": 0.0058,
+    "max_ms": 0.0081
+  },
+  "binary_envelope_encryption_50kb": {
+    "mean_ms": 0.0328,
+    "median_ms": 0.0322,
+    "p95_ms": 0.0378,
+    "min_ms": 0.013,
+    "max_ms": 0.0439
+  },
+  "binary_envelope_decryption_50kb": {
+    "mean_ms": 0.014,
+    "median_ms": 0.0129,
+    "p95_ms": 0.0153,
+    "min_ms": 0.0115,
+    "max_ms": 0.0423
+  },
+  "dpapi_key_access": {
+    "mean_ms": 0.0002,
+    "median_ms": 0.0001,
+    "p95_ms": 0.0019,
+    "min_ms": 0.0001,
+    "max_ms": 0.0019
+  },
+  "memory": {
+    "ram_before_mb": 338.22,
+    "ram_after_mb": 341.52,
+    "ram_delta_mb": 3.29
+  }
+}

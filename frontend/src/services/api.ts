@@ -461,12 +461,36 @@ export type SecurityStatus = {
   faiss_protection: string;
   local_only: boolean;
   cloud_leakage: boolean;
+  local_ai?: string;
+  cloud_inference?: string;
+  privacy_events?: number;
+  blocked_requests?: number;
+  encrypted_memories?: number;
+  encrypted_documents?: number;
 };
 
 export async function fetchSecurityStatus(): Promise<SecurityStatus> {
   const response = await fetch(`${API_BASE_URL}/api/system/security`);
   if (!response.ok) {
     throw new Error('Failed to fetch security status');
+  }
+  return response.json();
+}
+
+export type AIRuntimeVerifyResult = {
+  hardware_detected: boolean;
+  qnn_available: boolean;
+  provider_loaded: boolean;
+  model_loaded: boolean;
+  inference_verified: boolean;
+  active_fallback?: string | null;
+  error_reason?: string | null;
+};
+
+export async function verifyAIRuntime(): Promise<AIRuntimeVerifyResult> {
+  const response = await fetch(`${API_BASE_URL}/api/system/ai-runtime/verify`);
+  if (!response.ok) {
+    throw new Error('Failed to verify AI runtime');
   }
   return response.json();
 }

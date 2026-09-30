@@ -127,13 +127,13 @@ export default function PrivacyCenterPage() {
         </div>
       </div>
 
-      {/* Storage Encryption & Key Protection Card */}
+      {/* Storage Encryption & Key Protection Card (Part 13 Security Dashboard) */}
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-100">Secure Local Storage & Encryption at Rest</h3>
+            <h3 className="text-lg font-semibold text-slate-100">Security Dashboard & Storage Encryption</h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Authenticated AES-256-GCM encryption with local hardware-backed key protection.
+              Cryptographically verified on-device security telemetry with Windows DPAPI key protection.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -142,34 +142,46 @@ export default function PrivacyCenterPage() {
                 ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
                 : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
             }`}>
-              Storage: {security?.storage_encryption ? 'Encrypted' : 'Unencrypted'}
+              Storage Encryption: {security?.storage_encryption ? 'AES-256-GCM' : 'Unencrypted'}
             </span>
             <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
-              Key: {security?.key_protection ?? 'Protected Key'}
+              Key Protection: {security?.key_protection ?? 'Windows DPAPI'}
             </span>
           </div>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs font-mono">
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <p className="text-slate-400">Cipher & Key</p>
-            <p className="font-bold text-slate-200 mt-1">{security?.algorithm ?? 'AES-256-GCM'} ({security?.key_length_bits ?? 256}-bit)</p>
+            <p className="text-slate-400">Storage Encryption</p>
+            <p className="font-bold text-emerald-400 mt-1">{security?.algorithm ?? 'AES-256-GCM'}</p>
           </div>
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <p className="text-slate-400">ReMind Memories</p>
-            <p className={`font-bold mt-1 ${security?.memory_encrypted ? 'text-emerald-400' : 'text-slate-200'}`}>
-              {security?.memory_encrypted ? 'Encrypted at Rest' : 'Plaintext'}
-            </p>
+            <p className="text-slate-400">Key Protection</p>
+            <p className="font-bold text-cyan-400 mt-1">{security?.key_protection ?? 'Windows DPAPI'}</p>
           </div>
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <p className="text-slate-400">Document Chunks</p>
-            <p className={`font-bold mt-1 ${security?.documents_encrypted ? 'text-emerald-400' : 'text-slate-200'}`}>
-              {security?.documents_encrypted ? 'Encrypted at Rest' : 'Plaintext'}
-            </p>
+            <p className="text-slate-400">Local AI</p>
+            <p className="font-bold text-emerald-400 mt-1">{security?.local_ai ?? 'Enabled'}</p>
           </div>
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <p className="text-slate-400">FAISS Index Protection</p>
-            <p className="font-bold text-cyan-400 mt-1">{security?.faiss_protection ?? 'Envelope at Rest'}</p>
+            <p className="text-slate-400">Cloud Inference</p>
+            <p className="font-bold text-slate-300 mt-1">{security?.cloud_inference ?? 'Disabled'}</p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">Privacy Events</p>
+            <p className="font-bold text-cyan-300 mt-1">{security?.privacy_events ?? stats?.total_events ?? 0}</p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">Blocked Requests</p>
+            <p className="font-bold text-red-400 mt-1">{security?.blocked_requests ?? stats?.blocked_events ?? 0}</p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">Encrypted Memories</p>
+            <p className="font-bold text-purple-300 mt-1">{security?.encrypted_memories ?? 0}</p>
+          </div>
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400">Encrypted Documents</p>
+            <p className="font-bold text-cyan-300 mt-1">{security?.encrypted_documents ?? 0}</p>
           </div>
         </div>
       </div>

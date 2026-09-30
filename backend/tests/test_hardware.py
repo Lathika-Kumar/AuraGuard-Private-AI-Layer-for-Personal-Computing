@@ -80,6 +80,22 @@ def test_system_ai_runtime_api_endpoint() -> None:
     assert "models" in data
 
 
+def test_system_ai_runtime_verify_endpoint() -> None:
+    client = TestClient(app)
+    response = client.get("/api/system/ai-runtime/verify")
+    assert response.status_code == 200
+    data = response.json()
+    assert "hardware_detected" in data
+    assert "qnn_available" in data
+    assert "provider_loaded" in data
+    assert "model_loaded" in data
+    assert "inference_verified" in data
+    # On Intel dev environment, qnn_available is False, so inference_verified must be False
+    if not data["qnn_available"]:
+        assert data["inference_verified"] is False
+        assert data["provider_loaded"] is False
+
+
 def test_embedding_metadata_property() -> None:
     provider = EmbeddingProvider()
     meta = provider.metadata

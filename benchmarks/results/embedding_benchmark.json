@@ -1,0 +1,41 @@
+{
+  "benchmark": "neural_embedding",
+  "hardware_context": {
+    "timestamp_utc": "2026-09-30T03:54:18.381873+00:00",
+    "cpu_brand": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "architecture": "AMD64",
+    "physical_cores": 10,
+    "logical_cores": 12,
+    "total_ram_gb": 7.65,
+    "os_platform": "Windows-11-10.0.26200-SP0",
+    "snapdragon_detected": false,
+    "npu_available": false,
+    "qnn_available": false,
+    "execution_provider": "CPUExecutionProvider"
+  },
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "runtime": "onnxruntime",
+  "dimension": 384,
+  "provider": "CPUExecutionProvider",
+  "iterations": 10,
+  "single_inference": {
+    "mean_ms": 38.3159,
+    "median_ms": 39.6398,
+    "p95_ms": 50.3821,
+    "min_ms": 25.1324,
+    "max_ms": 50.3821
+  },
+  "batch_inference": {
+    "mean_ms": 174.4719,
+    "median_ms": 151.0003,
+    "p95_ms": 304.4661,
+    "min_ms": 127.2011,
+    "max_ms": 304.4661
+  },
+  "throughput_embeds_per_second": 57.32,
+  "memory": {
+    "ram_before_mb": 341.81,
+    "ram_after_mb": 453.52,
+    "ram_delta_mb": 111.7
+  }
+}

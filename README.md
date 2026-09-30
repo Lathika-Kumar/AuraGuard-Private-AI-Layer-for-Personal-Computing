@@ -1,149 +1,291 @@
 # AuraGuard — Private AI Layer for Personal Computing
 
-AuraGuard is an on-device, privacy-first personal AI computing layer designed for local RAG, context-aware memory intelligence, and secure personal assistance with hardware acceleration on Qualcomm Snapdragon platforms.
+> **Snapdragon-Ready, On-Device Private AI with Local RAG, Encrypted Storage, ReMind Context Intelligence, and Hardware-Aware Acceleration.**
 
 ```text
-                    AURAGUARD
-                        │
-              ┌─────────┴─────────┐
-              │                   │
-         Private AI          Secure Storage
-              │                   │
-           ReMind              AES-256-GCM
-              │                   │
-            RAG                 DPAPI
-              │                   │
-         Privacy Engine           │
-              │                   │
-              └─────────┬─────────┘
-                        ↓
-                  AI Runtime
-                        ↓
-               ┌────────┴────────┐
-               │                 │
-              CPU              QNN
-                                 ↓
-                            Snapdragon
-                                NPU
+                  AURAGUARD
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+     Documents      ReMind       Privacy
+        │             │          Engine
+        │             │             │
+        └───────┬─────┴─────────────┘
+                ↓
+          Local Retrieval (FAISS)
+                ↓
+        Context Construction
+                ↓
+          Privacy Filter
+                ↓
+           Local AI
+                ↓
+       ┌────────┴────────┐
+       │                 │
+      CPU               QNN (Snapdragon-Ready)
+                          ↓
+                    Snapdragon NPU*
+                ↓
+          Output Privacy Guard
+                ↓
+              Answer
 ```
 
----
-
-## Key Capabilities
-
-1. **Zero-Cloud Local Neural AI**:
-   - Neural semantic embeddings via `sentence-transformers/all-MiniLM-L6-v2` (FastEmbed / ONNX Runtime).
-   - Local generative answering via `Qwen/Qwen2.5-0.5B-Instruct` (on-device CPU fallback and QNN NPU target).
-   - 100% of user queries, documents, embeddings, and generative responses execute on the local machine with zero cloud API dependencies.
-
-2. **Secure Local Storage & Encryption at Rest (Phase 5)**:
-   - **Authenticated Encryption**: All document chunk text and ReMind memories are protected using **AES-256-GCM** (256-bit key, 96-bit IV, 128-bit authentication tag).
-   - **Hardware/OS-Backed Key Management**: The master encryption key is protected using **Windows DPAPI** (`CryptProtectData`), tying key security directly to the authenticated Windows user session.
-   - **FAISS Vector Index Protection**: Serialized FAISS indices are protected at rest via AES-256-GCM envelope encryption.
-   - **Fail-Safe Integrity**: Any bit-flip or ciphertext tampering triggers instantaneous rejection and fail-safe abortion before decryption.
-   - **Non-Destructive Migration**: Automatically detects and migrates pre-existing plaintext records to authenticated ciphertext with zero data loss.
-
-3. **ReMind Private Context Intelligence**:
-   - Long-term on-device personal memory store with semantic retrieval across personal facts, preferences, tasks, and goals.
-   - Explicit user lifecycle control: create, inspect, update, archive, expire, and permanent cryptographic deletion.
-
-4. **Multi-Checkpoint Privacy Engine**:
-   - **Checkpoint 1 (Input Scan)**: Scans incoming user queries for sensitive credentials (API keys, private keys, passwords) and blocks prohibited inputs.
-   - **Checkpoint 2 (Context Filtering)**: Sanitizes retrieved document and memory contexts; automatically neutralizes adversarial prompt injection vectors before passing to the LLM.
-   - **Checkpoint 3 (Output Guard)**: Scans generated text to guarantee no accidental credential exfiltration before displaying answers.
-
-5. **Qualcomm AI Hub & Snapdragon NPU Acceleration Path**:
-   - *Target Architecture*: Qualcomm Snapdragon X Series (Oryon CPU + 45 TOPS Hexagon NPU).
-   - *Model Precision*: INT8 dynamic quantization for embeddings (-74.7% disk footprint); INT4 (W4A16) preparation for Hexagon NPU.
-   - *Execution Provider Abstraction*: Supports `auto`, `cpu`, and `qnn`.
-   - *Current Verification Status*: Snapdragon NPU deployment path prepared and supported when compatible Qualcomm hardware and runtime are available. Active development host gracefully and automatically runs via `CPUExecutionProvider`.
+*\*Note on Snapdragon NPU: Architecture, INT8 quantization, and QNN runtime paths are verified. Actual NPU execution requires compatible Snapdragon hardware with Qualcomm QNN drivers.*
 
 ---
 
-## Architecture & Data Flow
+## 1. What is AuraGuard?
 
-```text
-User Query / Document
-         │
-         ▼
-[ Privacy Engine Checkpoint 1 ] ──> (Blocks raw credentials / injections)
-         │
-         ▼
-[ Neural Embedding Generation ] ──> (ONNX Runtime FP32 / INT8)
-         │
-         ▼
-[ Dense FAISS Vector Search ] ───> (Decrypted in-memory from AES-256-GCM envelope)
-         │
-         ▼
-[ Secure SQLite Retrieval ] ─────> (AES-256-GCM Decryption with DPAPI Master Key)
-         │
-         ▼
-[ Context Merger & Provenance ]
-         │
-         ▼
-[ Privacy Engine Checkpoint 2 ] ──> (Neutralizes prompt injections & redacts PII)
-         │
-         ▼
-[ Local LLM (Qwen2.5-0.5B) ] ───> (CPU Execution Provider / QNN NPU target)
-         │
-         ▼
-[ Output Privacy Guard ] ────────> (Final output verification & shielding)
-         │
-         ▼
-Grounded Local Answer
-```
+**AuraGuard** is an on-device, privacy-first AI layer designed for personal computing. It enables users to index sensitive personal documents, retain private conversational memories, and query a local Large Language Model (Qwen2.5-0.5B-Instruct) with complete data sovereignty.
+
+All embeddings, retrieval, privacy filtering, and generative reasoning happen entirely on the local device, with zero cloud dependency, zero external API keys, and zero telemetry.
 
 ---
 
-## Security Specifications
+## 2. Problem
 
-| Layer | Mechanism | Protection Scope |
+Modern commercial AI assistants routinely transmit sensitive personal context—confidential PDFs, corporate contracts, personal notes, and private memories—to remote cloud servers. This exposes personal computing to severe risks:
+* **Data Sovereignty Violations**: Confidential user files uploaded to external cloud inference endpoints.
+* **Persistent Exposure**: Stored conversational histories susceptible to server-side breaches or corporate model training.
+* **Prompt Injection Vulnerabilities**: Indirect prompt attacks embedded inside retrieved web pages or documents can compromise cloud AI agents.
+* **Network & Subscription Dependency**: Complete inability to operate offline or during transit without recurring fees.
+
+---
+
+## 3. Solution
+
+AuraGuard creates a strictly isolated on-device runtime:
+1. **Local Neural Ingestion**: Documents are parsed, chunked, and embedded into local FAISS vector stores using ONNX Runtime.
+2. **ReMind Private Memory**: User-approved personal facts, preferences, and tasks stored in an authenticated, encrypted local database.
+3. **Multi-Checkpoint Privacy Engine**: Pre-scans user inputs for secrets, cleans prompt injection vectors from retrieved context, and guards LLM output.
+4. **Hardware-Aware AI Runtime**: Executes locally on CPU (`CPUExecutionProvider`) and provides a verified, automated path to Qualcomm Hexagon NPU (`QNNExecutionProvider`) on Snapdragon Copilot+ PCs.
+5. **Cryptographic Protection at Rest**: All sensitive chunks, memories, and vector index binaries are encrypted with AES-256-GCM backed by Windows DPAPI.
+
+---
+
+## 4. Why Local AI?
+
+| Feature | Cloud AI | AuraGuard Local AI |
 | :--- | :--- | :--- |
-| **Document Chunks** | AES-256-GCM | Encrypted at rest in SQLite `document_chunks` table |
-| **ReMind Memories** | AES-256-GCM | Encrypted at rest in SQLite `memories` table |
-| **Vector Index** | AES-256-GCM Envelope | Encrypted at rest in `data/index/faiss.index` |
-| **Master Key** | Windows DPAPI | Protected on disk using local Windows user credentials |
-| **Network Boundaries** | Localhost Bound | 0 External outbound network requests for inference |
-| **Integrity** | 128-bit GCM Auth Tag | Detects and rejects any single-bit ciphertext tampering |
+| **Data Transmission** | Transmitted over public Internet | **100% On-Device (`localhost`)** |
+| **Privacy & Compliance** | Third-party cloud retention risk | **Zero Cloud Telemetry / Full User Sovereignty** |
+| **Offline Capability** | Non-functional without internet | **Fully functional air-gapped** |
+| **Latency Consistency** | Variable network round-trip time | **Predictable on-device hardware execution** |
+| **Hardware Utilization** | Idles device NPU/CPU | **Leverages local Qualcomm Snapdragon NPU / CPU** |
 
 ---
 
-## Quick Start
+## 5. Architecture
 
-### 1. Backend Setup
+AuraGuard's data path enforces strict local isolation at every stage:
+
+```text
+[User Document / PDF] ──► [Local Chunking] ──► [ONNX Embedding (all-MiniLM-L6-v2)]
+                                                       │
+                                                       ▼
+                                            [AES-256-GCM FAISS Store]
+                                                       │
+[User Query] ──► [Checkpoint 1: Input Scan] ───────────┤
+                       │                               ▼
+                       ▼                     [Semantic Retrieval]
+               [ReMind Memory Layer]                   │
+                       │                               ▼
+                       └───────────────► [Checkpoint 2: Context Filter]
+                                                       │
+                                                       ▼
+                                          [Local LLM (Qwen2.5-0.5B)]
+                                          (CPU or Snapdragon QNN)
+                                                       │
+                                                       ▼
+                                        [Checkpoint 3: Output Guard]
+                                                       │
+                                                       ▼
+                                            [Attributed Answer]
+```
+
+---
+
+## 6. Privacy Engine
+
+The AuraGuard Privacy Engine implements a three-tier defense system:
+* **Checkpoint 1 — Input Guard**: Scans incoming queries for high-entropy secrets (API keys, private keys, passwords) and blocks ingestion before processing.
+* **Checkpoint 2 — Context Neutralizer**: Inspects retrieved document chunks and memories for adversarial directives (`IGNORE ALL INSTRUCTIONS`, `SYSTEM PROMPT OVERRIDE`) and scrubs them with neutral tags.
+* **Checkpoint 3 — Output Guard**: Performs a final scan on generated text to prevent accidental exfiltration of PII (emails, phone numbers, credentials).
+
+---
+
+## 7. ReMind (Private Memory Intelligence)
+
+ReMind is an on-device personal memory store with explicit user lifecycle control:
+* **Explicit Approval**: Memories are never saved silently; the user reviews content, classification, and importance in a dedicated confirmation modal.
+* **Dual Retrieval**: Combines semantic FAISS vector search with SQLite attribute filters.
+* **Guaranteed Deletion**: Permanent removal erases the SQLite row, removes FAISS vector mappings, and verifies immediate zero-result retrieval.
+
+---
+
+## 8. Local RAG
+
+* **Embeddings**: `all-MiniLM-L6-v2` generating 384-dimensional dense vectors via ONNX Runtime.
+* **Vector Store**: FAISS `IndexFlatL2` serialized with AES-256-GCM envelope encryption.
+* **Retrieval**: High-precision top-k cosine similarity search.
+* **Generation**: `Qwen2.5-0.5B-Instruct` executing locally with source citation transparency (document name and page number).
+
+---
+
+## 9. Snapdragon / QNN Architecture
+
+* **Target Hardware**: Qualcomm Snapdragon X Elite / Plus Copilot+ PCs (Oryon CPU + 45 TOPS Hexagon NPU).
+* **Provider Abstraction**: Dynamically detects available hardware and selects `QNNExecutionProvider` when available, falling back cleanly to `CPUExecutionProvider`.
+* **Quantization**: INT8 dynamic quantization for embeddings (-74.7% footprint reduction with >0.95 cosine similarity retention); INT4 preparation for Hexagon NPU execution.
+* **Verification Status**: **Snapdragon-Ready**. Automated hardware and QNN verification implemented via `scripts/qualcomm/verify_snapdragon.ps1` and `GET /api/system/ai-runtime/verify`.
+
+---
+
+## 10. Security & Encryption
+
+* **Algorithm**: AES-256-GCM (Galois/Counter Mode) with 96-bit unique IVs and 128-bit authentication tags.
+* **Key Protection**: Master keys are protected using **Windows DPAPI** (`CryptProtectData`), tying cryptographic access directly to the authenticated Windows user session.
+* **Zero Plaintext Storage**: Keys are never hard-coded, never placed in `.env`, and never transmitted over API endpoints.
+* **Tamper Proof**: Bit-level modifications in ciphertext fail GMAC authentication before plaintext decryption is attempted.
+
+---
+
+## 11. Installation
+
+### Prerequisites
+* Windows 11 (x86_64 or ARM64 Snapdragon)
+* Python 3.10+ (Python 3.13 tested)
+* Node.js v18+ (Node.js v24 tested)
+
+### One-Command Setup
+Clone the repository and run the setup script:
 
 ```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+git clone https://github.com/Lathika-Kumar/AuraGuard-Private-AI-Layer-for-Personal-Computing.git
+cd AuraGuard-Private-AI-Layer-for-Personal-Computing
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 ```
 
-### 2. Frontend Setup
+The setup script automatically creates the Python virtual environment, installs backend and frontend dependencies, validates directory structures, and prepares default environment configurations.
 
+---
+
+## 12. Running AuraGuard
+
+### One-Command Launch
+Start both the FastAPI backend and React frontend with a single command:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start.ps1
+```
+
+Console output displays detected hardware and active AI execution providers:
+```text
+AuraGuard started
+
+Backend:  http://127.0.0.1:8000
+Frontend: http://127.0.0.1:5173
+
+Hardware:
+12th Gen Intel(R) Core(TM) i5-1235U
+
+AI Provider:
+CPUExecutionProvider
+```
+
+Access the UI at `http://127.0.0.1:5173`.
+
+---
+
+## 13. Benchmarks
+
+AuraGuard includes an automated, reproducible benchmark suite in `scripts/benchmark/` with warm-up cycles and statistical aggregation (mean, median, p95, min, max):
+
+```powershell
+backend\.venv\Scripts\python scripts\benchmark\run_all_benchmarks.py
+```
+
+Results are saved as structured JSON in `benchmarks/results/`:
+* `encryption_benchmark.json`: AES-256-GCM throughput and DPAPI access latency (~0.008 ms/chunk).
+* `embedding_benchmark.json`: ONNX embedding latency (~38.3 ms/single text) and throughput (~57.3 embeds/sec).
+* `memory_benchmark.json`: ReMind memory creation (~66.7 ms) and semantic search (~60.1 ms).
+* `llm_benchmark.json`: Qwen2.5-0.5B Time to First Token (~3.7 ms) and CPU token generation rate (~1.12 tokens/sec).
+* `rag_benchmark.json`: End-to-end RAG pipeline breakdown (Privacy Check 1.7 ms, Retrieval 31.1 ms, Generation 12.0 s).
+
+---
+
+## 14. Hardware Support
+
+| Platform | Processor | Execution Provider | Status |
+| :--- | :--- | :--- | :--- |
+| **Intel / AMD PC** | x86_64 CPU | `CPUExecutionProvider` | **Fully Verified** |
+| **Windows on ARM** | Generic ARM64 CPU | `CPUExecutionProvider` | **Supported** |
+| **Snapdragon X Elite / Plus** | Qualcomm Hexagon NPU | `QNNExecutionProvider` | **Snapdragon-Ready** (verified via QNN validation script) |
+
+---
+
+## 15. Limitations & Threat Boundaries
+
+* **Live Process Memory**: A local user or root process running with Administrator privileges (`SeDebugPrivilege`) can read volatile RAM of running applications. Encryption protects data at rest, not live volatile heap memory.
+* **CPU Generation Speed**: Generative LLM inference on low-power Intel mobile CPUs averages ~1.1 tokens/sec; Snapdragon NPU deployment is designed to accelerate this throughput substantially.
+* **PDF Parsing**: AuraGuard uses text extraction; complex scanned bitmaps require local OCR tooling.
+
+---
+
+## 16. Project Structure
+
+```text
+AuraGuard/
+├── backend/
+│   ├── app/
+│   │   ├── api/routes/       # FastAPI REST endpoints (ask, documents, memory, privacy, system)
+│   │   ├── core/             # Configuration, logging, settings
+│   │   ├── database/         # SQLite schema, migrations, connection management
+│   │   ├── models/           # Pydantic schemas and database models
+│   │   ├── security/         # AES-256-GCM, Windows DPAPI key manager
+│   │   └── services/         # AI provider, embeddings, FAISS, privacy engine, ReMind
+│   └── tests/                # 61 comprehensive backend pytest unit/integration tests
+├── frontend/
+│   ├── src/
+│   │   ├── components/       # UI layout, pipeline flow visualizer, navigation
+│   │   ├── pages/            # Dashboard, Ask, Documents, Memory (ReMind), Privacy Center
+│   │   └── services/         # TypeScript API client
+│   └── tests/                # Vitest frontend unit tests
+├── scripts/
+│   ├── setup.ps1             # One-command environment initialization
+│   ├── start.ps1             # One-command dual-process launcher
+│   ├── verify.ps1            # Deep subsystem verification suite
+│   ├── benchmark/            # Reproducible benchmark suite (embedding, llm, rag, memory, crypto)
+│   └── qualcomm/             # Snapdragon NPU & QNN verification scripts
+├── benchmarks/results/       # Empirical benchmark JSON outputs
+└── docs/                     # Architecture, threat model, demo script, submission portfolio
+```
+
+---
+
+## 17. Testing
+
+### Run All Backend Tests
+```powershell
+backend\.venv\Scripts\python -m pytest backend/tests -v
+```
+*(61/61 passing)*
+
+### Run Frontend Tests & Build
 ```powershell
 cd frontend
-npm install
-npm run dev
+npm test
+npm run build
 ```
+*(4/4 passing, production build succeeded)*
 
-Visit `http://localhost:5173` to access the AuraGuard Dashboard, Ask Page, Privacy Center, and ReMind Memory interface.
-
----
-
-## Running Automated Verification Tests
-
+### Run Subsystem Verification
 ```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1
-python -m pytest
+powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 ```
 
----
-
-## Verification & Limitations
-
-- **Current Machine**: 12th Gen Intel Core i5-1235U, Windows 11 x86_64, ~7.65 GB RAM.
-- **Active Execution Provider**: `CPUExecutionProvider` (Qualcomm Hexagon NPU is not physically present on Intel development host).
-- **Physical Snapdragon Verification**: Snapdragon benchmarks and NPU execution require deployment on physical Windows on ARM hardware (e.g. Snapdragon X Elite laptop).
+### Run Snapdragon Hardware Validation
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\qualcomm\verify_snapdragon.ps1
+```

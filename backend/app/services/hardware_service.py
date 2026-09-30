@@ -71,16 +71,38 @@ class HardwareService:
 
     @classmethod
     def is_snapdragon(cls) -> bool:
-        """Checks if the current system is running on a Qualcomm Snapdragon processor."""
-        machine = platform.machine().lower()
-        cpu_name = cls.get_cpu_brand().lower()
+        """Checks if the current system is running on a Qualcomm Snapdragon processor.
         
-        # Check architecture and processor branding
+        Requires ARM64 architecture AND explicit Qualcomm / Snapdragon processor indicators,
+        distinguishing real Snapdragon hardware from generic ARM64 or Apple Silicon virtual machines.
+        """
+        machine = platform.machine().lower()
         is_arm = machine in ("arm64", "aarch64")
-        has_snapdragon_brand = any(
-            token in cpu_name for token in ["snapdragon", "qualcomm", "sc8380xp", "x elite", "x plus"]
-        )
-        return is_arm and has_snapdragon_brand
+        if not is_arm:
+            return False
+
+        cpu_name = cls.get_cpu_brand().lower()
+        snapdragon_tokens = ["snapdragon", "qualcomm", "sc8380xp", "x elite", "x plus", "oryon", "kryo"]
+        has_snapdragon_brand = any(token in cpu_name for token in snapdragon_tokens)
+        if has_snapdragon_brand:
+            return True
+
+        # Secondary registry check on Windows ARM64
+        if platform.system() == "Windows":
+            try:
+                import winreg
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+                    proc_name, _ = winreg.QueryValueEx(key, "ProcessorNameString")
+                    vendor, _ = winreg.QueryValueEx(key, "VendorIdentifier")
+                    combined = f"{proc_name} {vendor}".lower()
+                    if any(t in combined for t in snapdragon_tokens):
+                        # Explicitly exclude Apple Silicon or generic QEMU VMs
+                        if not any(non_sd in combined for non_sd in ["apple", "virtualapple", "qemu", "kvm"]):
+                            return True
+            except Exception:
+                pass
+
+        return False
 
     @classmethod
     def is_npu_available(cls) -> bool:
@@ -105,6 +127,58 @@ class HardwareService:
                 pass
 
         return False
+
+    @classmethod
+    def verify_qnn_runtime(cls) -> dict[str, Any]:
+        """Dedicated runtime verification for Qualcomm QNN and Snapdragon NPU execution.
+
+        Performs actual check sequence:
+        1. hardware_detected: true if host is verified Snapdragon SoC
+        2. qnn_available: true if QNNExecutionProvider is present in ONNX Runtime
+        3. provider_loaded: true if InferenceSession can be initialized with QNN
+        4. model_loaded: true if ONNX model binary can be loaded into QNN session
+        5. inference_verified: true if an actual tensor inference pass succeeds
+        """
+        import numpy as np
+        hw_detected = cls.is_snapdragon()
+        providers = cls.get_available_execution_providers()
+        qnn_available = "QNNExecutionProvider" in providers
+
+        provider_loaded = False
+        model_loaded = False
+        inference_verified = False
+        error_reason = None
+
+        if qnn_available and ort is not None:
+            try:
+                model_path = str(settings.model_cache_dir / "onnx" / "embedding_model_int8.onnx")
+                if not os.path.exists(model_path):
+                    model_path = str(settings.model_cache_dir / "onnx" / "embedding_model.onnx")
+
+                if os.path.exists(model_path):
+                    session_options = ort.SessionOptions()
+                    session = ort.InferenceSession(model_path, session_options, providers=["QNNExecutionProvider"])
+                    provider_loaded = True
+                    model_loaded = True
+
+                    # Run dummy inference pass
+                    inputs = {session.get_inputs()[0].name: np.array([[101, 2054, 2003, 1037, 3231, 102]], dtype=np.int64)}
+                    if len(session.get_inputs()) > 1:
+                        inputs[session.get_inputs()[1].name] = np.array([[1, 1, 1, 1, 1, 1]], dtype=np.int64)
+                    session.run(None, inputs)
+                    inference_verified = True
+            except Exception as ex:
+                error_reason = str(ex)
+
+        return {
+            "hardware_detected": hw_detected,
+            "qnn_available": qnn_available,
+            "provider_loaded": provider_loaded,
+            "model_loaded": model_loaded,
+            "inference_verified": inference_verified,
+            "active_fallback": "CPUExecutionProvider" if not inference_verified else None,
+            "error_reason": error_reason,
+        }
 
     @classmethod
     def get_available_execution_providers(cls) -> list[str]:

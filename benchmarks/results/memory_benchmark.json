@@ -1,0 +1,36 @@
+{
+  "benchmark": "remind_memory",
+  "hardware_context": {
+    "timestamp_utc": "2026-09-30T03:54:23.755878+00:00",
+    "cpu_brand": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "architecture": "AMD64",
+    "physical_cores": 10,
+    "logical_cores": 12,
+    "total_ram_gb": 7.65,
+    "os_platform": "Windows-11-10.0.26200-SP0",
+    "snapdragon_detected": false,
+    "npu_available": false,
+    "qnn_available": false,
+    "execution_provider": "CPUExecutionProvider"
+  },
+  "iterations": 10,
+  "memory_creation": {
+    "mean_ms": 66.6937,
+    "median_ms": 69.7307,
+    "p95_ms": 98.5775,
+    "min_ms": 34.4658,
+    "max_ms": 98.5775
+  },
+  "memory_search": {
+    "mean_ms": 60.1072,
+    "median_ms": 59.1635,
+    "p95_ms": 100.2035,
+    "min_ms": 39.3798,
+    "max_ms": 100.2035
+  },
+  "memory": {
+    "ram_before_mb": 454.12,
+    "ram_after_mb": 454.68,
+    "ram_delta_mb": 0.57
+  }
+}

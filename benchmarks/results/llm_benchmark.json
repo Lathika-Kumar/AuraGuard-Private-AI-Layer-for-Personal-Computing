@@ -1,0 +1,47 @@
+{
+  "benchmark": "local_llm_generation",
+  "hardware_context": {
+    "timestamp_utc": "2026-09-30T03:55:36.687413+00:00",
+    "cpu_brand": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "architecture": "AMD64",
+    "physical_cores": 10,
+    "logical_cores": 12,
+    "total_ram_gb": 7.65,
+    "os_platform": "Windows-11-10.0.26200-SP0",
+    "snapdragon_detected": false,
+    "npu_available": false,
+    "qnn_available": false,
+    "execution_provider": "CPUExecutionProvider"
+  },
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "runtime": "pytorch",
+  "precision": "float32",
+  "provider": "CPU",
+  "iterations": 2,
+  "total_latency": {
+    "mean_ms": 18370.8531,
+    "median_ms": 18370.8531,
+    "p95_ms": 21408.0935,
+    "min_ms": 15333.6126,
+    "max_ms": 21408.0935
+  },
+  "ttft": {
+    "mean_ms": 3.74,
+    "median_ms": 3.74,
+    "p95_ms": 5.0405,
+    "min_ms": 2.4394,
+    "max_ms": 5.0405
+  },
+  "tokens_per_second": {
+    "mean_ms": 1.1202,
+    "median_ms": 1.1202,
+    "p95_ms": 1.3056,
+    "min_ms": 0.9348,
+    "max_ms": 1.3056
+  },
+  "memory": {
+    "ram_before_mb": 454.7,
+    "ram_after_mb": 991.47,
+    "ram_delta_mb": 536.77
+  }
+}

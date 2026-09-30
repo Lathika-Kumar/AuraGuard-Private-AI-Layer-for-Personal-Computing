@@ -55,6 +55,10 @@ class FaissIndex:
         self.index = faiss.IndexFlatL2(self.dim)
         self._save()
 
+    def count(self) -> int:
+        """Return the total number of vectors in the FAISS index."""
+        return self.index.ntotal
+
     def add(self, vectors: List[np.ndarray]) -> int:
         if not vectors:
             return self.index.ntotal

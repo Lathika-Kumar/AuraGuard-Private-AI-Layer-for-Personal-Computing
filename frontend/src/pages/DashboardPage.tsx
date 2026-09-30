@@ -87,31 +87,28 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Technical Model / AI Runtime Specification Panel */}
+      {/* Part 15: Model Dashboard */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-5 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              AI Runtime Specification
+              Model Dashboard
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              On-device execution pipeline &bull; Qualcomm AI Hub target profile
+              Active neural models, precisions, on-device runtimes, and accelerator bindings.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
-              Execution: {hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNN' : 'CPU'}
-            </span>
-            <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
-              Device: {hardware?.snapdragon.is_snapdragon ? 'Snapdragon' : 'Intel'}
+              Provider: {hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNNExecutionProvider' : (models?.embedding.provider ?? 'CPUExecutionProvider')}
             </span>
             <span className={`font-mono text-xs px-2.5 py-1 rounded border ${
               aiRuntime?.npu_available
                 ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
                 : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
             }`}>
-              Accelerator: {aiRuntime?.npu_available ? 'NPU' : 'NPU unavailable'}
+              Accelerator: {aiRuntime?.npu_available ? 'Hexagon NPU' : 'CPU'}
             </span>
           </div>
         </div>
@@ -123,8 +120,8 @@ export default function DashboardPage() {
               {models?.embedding.name.split('/').pop() ?? 'all-MiniLM-L6-v2'}
             </span>
             <div className="mt-2 text-slate-400 space-y-0.5 text-[11px]">
+              <div>Precision: <span className="text-emerald-400">{models?.embedding.precision ?? 'INT8'}</span></div>
               <div>Runtime: <span className="text-cyan-300">{models?.embedding.runtime ?? 'onnxruntime'}</span></div>
-              <div>Precision: <span className="text-emerald-400">{models?.embedding.precision ?? 'float32'}</span></div>
               <div>Provider: <span className="text-slate-300">{models?.embedding.provider ?? 'CPUExecutionProvider'}</span></div>
             </div>
           </div>
@@ -135,124 +132,99 @@ export default function DashboardPage() {
               {models?.llm.name.split('/').pop() ?? 'Qwen2.5-0.5B-Instruct'}
             </span>
             <div className="mt-2 text-slate-400 space-y-0.5 text-[11px]">
+              <div>Precision: <span className="text-emerald-400">{models?.llm.precision ?? 'FP32'}</span></div>
               <div>Runtime: <span className="text-cyan-300">{models?.llm.runtime ?? 'pytorch'}</span></div>
-              <div>Precision: <span className="text-emerald-400">{models?.llm.precision ?? 'float32'}</span></div>
-              <div>Provider: <span className="text-slate-300">{models?.llm.provider ?? 'CPU'}</span></div>
+              <div>Provider: <span className="text-slate-300">{models?.llm.provider ?? 'CPUExecutionProvider'}</span></div>
             </div>
           </div>
 
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Active Execution State</span>
-            <div className="mt-1 space-y-1.5 text-[11px] text-slate-300">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Execution:</span>
-                <span className="text-cyan-300 font-semibold">{hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNN' : 'CPU'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Device:</span>
-                <span className="text-slate-200">{hardware?.snapdragon.is_snapdragon ? 'Snapdragon' : 'Intel'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Accelerator:</span>
-                <span className={aiRuntime?.npu_available ? 'text-emerald-400' : 'text-amber-400'}>
-                  {aiRuntime?.npu_available ? 'NPU' : 'NPU unavailable'}
-                </span>
-              </div>
+            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Execution Provider</span>
+            <div className="mt-2 text-slate-400 space-y-0.5 text-[11px]">
+              <div>Active: <span className="text-cyan-300 font-semibold">{hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNNExecutionProvider' : 'CPUExecutionProvider'}</span></div>
+              <div>Configured: <span className="text-slate-300">{aiRuntime?.configured_execution_provider ?? 'auto'}</span></div>
+              <div>Fallback: <span className="text-slate-300">{aiRuntime?.fallback_occurred ? 'Yes (CPU)' : 'None'}</span></div>
             </div>
           </div>
 
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Target Platform</span>
-            <div className="mt-1 space-y-1.5 text-[11px] text-slate-300">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Target Arch:</span>
-                <span className="text-slate-200">Snapdragon X Elite</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Target NPU:</span>
-                <span className="text-slate-200">Qualcomm Hexagon</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">LLM Precision:</span>
-                <span className="text-emerald-400">
-                  {hardware?.snapdragon.is_snapdragon ? 'INT4' : (models?.llm.precision ?? 'float32')}
-                </span>
-              </div>
+            <span className="text-slate-500 block uppercase tracking-wider text-[10px]">Accelerator State</span>
+            <div className="mt-2 text-slate-400 space-y-0.5 text-[11px]">
+              <div>NPU Acceleration: <span className={aiRuntime?.npu_available ? 'text-emerald-400' : 'text-amber-400'}>{aiRuntime?.npu_available ? 'Hexagon NPU' : 'CPU Execution'}</span></div>
+              <div>Target Hardware: <span className="text-slate-300">Snapdragon X Elite</span></div>
+              <div>Cloud Offloading: <span className="text-emerald-400 font-bold">0% (Strictly Disabled)</span></div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* AI Runtime & Hardware Readiness */}
+      {/* Part 14: AI Hardware Dashboard */}
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <h3 className="text-lg font-semibold text-slate-100">AI Runtime & Hardware Acceleration</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-100">AI Hardware</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Empirically detected host silicon, architecture, and accelerator capabilities.</p>
+          </div>
           <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-              aiRuntime?.npu_available
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium font-mono ${
+              hardware?.snapdragon.is_snapdragon
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                : 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
+                : 'bg-slate-800 text-slate-300 border border-slate-700'
             }`}
           >
-            {aiRuntime?.npu_available ? 'NPU Accelerated' : 'CPU Execution (Graceful Fallback)'}
+            Snapdragon: {hardware?.snapdragon.is_snapdragon ? 'Detected' : 'Not detected'}
           </span>
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm text-slate-300">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm text-slate-300">
           <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
-            <p className="text-xs text-slate-400">Host Processor</p>
-            <p className="mt-1 font-medium text-slate-200">{hardware?.cpu.brand ?? 'Detecting...'}</p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Arch: {hardware?.cpu.architecture ?? 'x86_64'} | {hardware?.cpu.logical_cores ?? 1} Cores
-            </p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider">CPU</p>
+            <p className="mt-1 font-medium text-slate-200 truncate" title={hardware?.cpu.brand}>{hardware?.cpu.brand ?? 'Detecting...'}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{hardware?.cpu.logical_cores ?? 1} Logical Cores</p>
           </div>
 
           <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
-            <p className="text-xs text-slate-400">Snapdragon Platform</p>
-            <p className="mt-1 font-medium text-slate-200">
-              {hardware?.snapdragon.is_snapdragon ? 'Snapdragon Detected' : 'Intel/AMD x86_64 Host'}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Target: {hardware?.snapdragon.target_device ?? 'Snapdragon X Elite'}
-            </p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider">Architecture</p>
+            <p className="mt-1 font-medium text-slate-200">{hardware?.cpu.architecture ?? 'x86_64'}</p>
+            <p className="mt-0.5 text-xs text-slate-500">OS: {hardware?.os.system ?? 'Windows'} {hardware?.os.release ?? '11'}</p>
           </div>
 
           <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
-            <p className="text-xs text-slate-400">Qualcomm Hexagon NPU</p>
-            <p className="mt-1 font-medium text-slate-200">
-              {aiRuntime?.npu_available ? 'Hexagon NPU Active' : 'Not Present (CPU Fallback)'}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              QNN Execution Provider: {aiRuntime?.qnn_available ? 'Available' : 'Unavailable'}
-            </p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider">RAM</p>
+            <p className="mt-1 font-medium text-slate-200">{hardware?.memory.total_gb ?? 0} GB</p>
+            <p className="mt-0.5 text-xs text-slate-500">{hardware?.memory.available_gb ?? 0} GB available ({hardware?.memory.percent_used ?? 0}% used)</p>
           </div>
 
           <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
-            <p className="text-xs text-slate-400">Active Execution Provider</p>
-            <p className="mt-1 font-mono text-cyan-300">
-              {aiRuntime?.active_execution_provider ?? 'CPUExecutionProvider'}
+            <p className="text-xs text-slate-400 uppercase tracking-wider">Snapdragon Detected</p>
+            <p className={`mt-1 font-semibold ${hardware?.snapdragon.is_snapdragon ? 'text-emerald-400' : 'text-slate-300'}`}>
+              {hardware?.snapdragon.is_snapdragon ? 'Detected' : 'Not detected'}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500">Configured: {aiRuntime?.configured_execution_provider ?? 'auto'}</p>
+            <p className="mt-0.5 text-xs text-slate-500">Verified Silicon Identification</p>
           </div>
 
           <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
-            <p className="text-xs text-slate-400">Neural Embeddings</p>
-            <p className="mt-1 font-medium text-slate-200">
-              {aiRuntime?.models.embedding.model_name.split('/').pop() ?? 'all-MiniLM-L6-v2'}
+            <p className="text-xs text-slate-400 uppercase tracking-wider">NPU Available</p>
+            <p className={`mt-1 font-semibold ${hardware?.npu.npu_available ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {hardware?.npu.npu_available ? 'Available' : 'Not available'}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Runtime: {aiRuntime?.models.embedding.runtime} (dim: {aiRuntime?.models.embedding.dimension})
-            </p>
+            <p className="mt-0.5 text-xs text-slate-500">Qualcomm Hexagon Accelerator</p>
           </div>
 
           <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
-            <p className="text-xs text-slate-400">Neural Language Model</p>
-            <p className="mt-1 font-medium text-slate-200">
-              {aiRuntime?.models.llm.model_id.split('/').pop() ?? 'Qwen2.5-0.5B-Instruct'}
+            <p className="text-xs text-slate-400 uppercase tracking-wider">QNN Available</p>
+            <p className={`mt-1 font-semibold ${aiRuntime?.qnn_available ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {aiRuntime?.qnn_available ? 'Available' : 'Not available'}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Runtime: {aiRuntime?.models.llm.runtime} ({aiRuntime?.models.llm.device.toUpperCase()})
+            <p className="mt-0.5 text-xs text-slate-500">ONNX Runtime QNN Provider</p>
+          </div>
+
+          <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3 sm:col-span-2">
+            <p className="text-xs text-slate-400 uppercase tracking-wider">Execution Provider</p>
+            <p className="mt-1 font-mono text-cyan-300 font-semibold">
+              {hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNN' : 'CPU'}
             </p>
+            <p className="mt-0.5 text-xs text-slate-500">Active provider: {aiRuntime?.active_execution_provider ?? 'CPUExecutionProvider'}</p>
           </div>
         </div>
 

@@ -38,6 +38,16 @@ async def get_dashboard_stats_endpoint() -> dict[str, Any]:
     return stats
 
 
+@router.get("/ai-runtime/verify")
+async def verify_ai_runtime() -> dict[str, Any]:
+    """Dedicated runtime verification for Qualcomm QNN and Snapdragon NPU execution.
+
+    Returns empirical status of hardware detection, QNN provider availability, session loading,
+    model loading, and actual tensor inference execution.
+    """
+    return HardwareService.verify_qnn_runtime()
+
+
 @router.get("/security")
 async def get_security_status() -> dict[str, Any]:
     """Returns local storage encryption status, algorithm, key protection method, and privacy boundaries.
@@ -45,7 +55,21 @@ async def get_security_status() -> dict[str, Any]:
     Guarantees no raw keys, ciphertext, or private data are ever exposed.
     """
     from app.security.encryption_service import encryption_service
+    from app.database.database import get_db_connection
     meta = encryption_service.get_security_metadata()
+    meta["local_ai"] = "Enabled"
+    meta["cloud_inference"] = "Disabled"
     meta["local_only"] = True
     meta["cloud_leakage"] = False
+
+    with get_db_connection() as conn:
+        doc_count = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+        mem_count = conn.execute("SELECT COUNT(*) FROM memories WHERE status = 'active'").fetchone()[0]
+        priv_events = conn.execute("SELECT COUNT(*) FROM privacy_events").fetchone()[0]
+        blocked = conn.execute("SELECT COUNT(*) FROM privacy_events WHERE action = 'BLOCK' OR event_type LIKE '%BLOCKED%'").fetchone()[0]
+
+    meta["privacy_events"] = priv_events
+    meta["blocked_requests"] = blocked
+    meta["encrypted_memories"] = mem_count
+    meta["encrypted_documents"] = doc_count
     return meta
