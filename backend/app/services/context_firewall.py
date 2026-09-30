@@ -92,7 +92,7 @@ class ContextFirewall:
                     # Associate with a source if possible
                     source_name = "Retrieved Context"
                     if sources:
-                        source_name = sources[0].get("filename", "document.pdf")
+                        source_name = sources[0].get("filename") or "document.pdf"
                         if sources[0].get("page_number"):
                             source_name += f" — Page {sources[0]['page_number']}"
                     elif memories:

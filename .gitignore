@@ -51,3 +51,7 @@ models/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Working demo files and test output
+docs/demo_pdfs/
+test-results/
