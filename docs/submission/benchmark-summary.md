@@ -86,7 +86,7 @@ All benchmark results documented below were gathered using the automated reprodu
 | **32 tokens** | 248 | 32 | **14,204.1 ms** | **20,853.2 ms** | **4.36 tokens/sec** |
 | **64 tokens** | 248 | 64 | **13,919.0 ms** | **20,494.0 ms** | **4.41 tokens/sec** |
 
-*Methodology Insight*: Measuring prompt prefill to first emitted token (true TTFT via `TTFTStreamer`) reveals that mobile x86 CPUs spend ~14 seconds evaluating a 250-token prompt before decoding at ~4.3 tokens/sec. This empirical data demonstrates exactly why hardware acceleration via the Qualcomm Hexagon NPU is targeted for Copilot+ PCs.
+*Methodology Insight*: Measuring prompt prefill to first emitted token (true TTFT via `TTFTStreamer`) reveals that mobile x86 CPUs spend ~14 seconds evaluating a 250-token prompt before decoding at ~4.3 tokens/sec. This CPU measurement establishes the Intel baseline and motivates evaluation on Snapdragon hardware; Snapdragon performance must be determined through direct measurement on compatible hardware.
 
 ---
 

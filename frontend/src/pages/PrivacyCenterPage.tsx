@@ -89,12 +89,15 @@ export default function PrivacyCenterPage() {
             Real-time entity detection, classification, on-device sanitization, and audit telemetry.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-500/30">
-            Local Processing: 100%
+            Local Inference: Enabled
           </span>
-          <span className="inline-flex items-center rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300 border border-cyan-500/30">
-            External Network Calls: 0
+          <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300 border border-slate-700">
+            Cloud Inference: Disabled
+          </span>
+          <span className="inline-flex items-center rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-mono text-cyan-300 border border-cyan-500/30">
+            Backend: 127.0.0.1
           </span>
         </div>
       </header>
@@ -263,26 +266,30 @@ export default function PrivacyCenterPage() {
 
         {scanResult ? (
           <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/80 p-4 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-400">Classification:</span>
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-bold ${
-                    scanResult.classification === 'HIGHLY_SENSITIVE'
-                      ? 'bg-red-500/20 text-red-300 border border-red-500/40'
-                      : scanResult.classification === 'SENSITIVE'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                      : scanResult.classification === 'PERSONAL'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                  }`}
-                >
-                  {scanResult.classification}
+            {/* Part 9: Structured Detection, Classification, Decision, Reason */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs border-b border-slate-800 pb-3">
+              <div className="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Detection</span>
+                <span className="font-semibold text-cyan-300 mt-1 block">
+                  {scanResult.entities.length > 0 ? scanResult.entities.map(e => e.type).join(', ') : 'None'}
                 </span>
               </div>
-              <span className="text-xs text-slate-400">
-                Action: <strong className="text-slate-200">{scanResult.allowed ? 'ALLOWED' : 'BLOCKED'}</strong>
-              </span>
+              <div className="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Classification</span>
+                <span className="font-semibold text-amber-300 mt-1 block">{scanResult.classification}</span>
+              </div>
+              <div className="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Decision</span>
+                <span className={`font-bold mt-1 block ${scanResult.allowed ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {scanResult.allowed ? 'ALLOWED' : 'BLOCKED'}
+                </span>
+              </div>
+              <div className="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Reason</span>
+                <span className="text-slate-300 mt-1 block text-[11px]">
+                  {scanResult.allowed ? 'Safe for on-device context synthesis' : 'Credential detected before ingestion'}
+                </span>
+              </div>
             </div>
 
             {scanResult.entities.length > 0 ? (

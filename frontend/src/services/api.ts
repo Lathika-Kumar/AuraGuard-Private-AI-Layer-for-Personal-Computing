@@ -47,6 +47,7 @@ export type SearchSource = {
   filename: string;
   page_number: number;
   chunk_id: number;
+  text?: string;
 };
 
 export type MemorySource = {

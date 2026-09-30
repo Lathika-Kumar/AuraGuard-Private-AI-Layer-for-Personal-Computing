@@ -1,6 +1,7 @@
 # AuraGuard — Private AI Layer for Personal Computing
 
-> **Snapdragon-Ready, On-Device Private AI with Local RAG, Encrypted Storage, ReMind Context Intelligence, and Hardware-Aware Acceleration.**
+> **AuraGuard is a privacy-first local AI layer for personal computing.**
+> It combines local document intelligence, user-controlled memory, privacy filtering, encrypted storage, and hardware-aware AI execution so personal AI workloads can remain on the user's device.
 
 ```text
                   AURAGUARD
@@ -31,13 +32,13 @@
               Answer
 ```
 
-*\*Note on Snapdragon NPU: Architecture, INT8 quantization, and QNN runtime paths are verified. Actual NPU execution requires compatible Snapdragon hardware with Qualcomm QNN drivers.*
+*\*Note on Snapdragon NPU: AuraGuard includes a Qualcomm QNN deployment path for Snapdragon X Series systems. Physical Snapdragon NPU performance must be measured on compatible hardware and is not represented by the Intel baseline.*
 
 ---
 
 ## 1. What is AuraGuard?
 
-**AuraGuard** is an on-device, privacy-first AI layer designed for personal computing. It enables users to index sensitive personal documents, retain private conversational memories, and query a local Large Language Model (Qwen2.5-0.5B-Instruct) with complete data sovereignty.
+**AuraGuard** is a privacy-first local AI layer for personal computing. It enables users to index sensitive personal documents, retain private conversational memories, and query a local Large Language Model (Qwen2.5-0.5B-Instruct) with complete data sovereignty.
 
 All embeddings, retrieval, privacy filtering, and generative reasoning happen entirely on the local device, with zero cloud dependency, zero external API keys, and zero telemetry.
 
@@ -270,7 +271,7 @@ AuraGuard/
 ```powershell
 backend\.venv\Scripts\python -m pytest backend/tests -v
 ```
-*(61/61 passing)*
+*(77/77 passing)*
 
 ### Run Frontend Tests & Build
 ```powershell
@@ -289,3 +290,13 @@ powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\qualcomm\verify_snapdragon.ps1
 ```
+
+---
+
+## 18. Competition Demo & Documentation
+
+- **3-Minute Live Demo Script**: [docs/submission/final-demo-script.md](file:///docs/submission/final-demo-script.md)
+- **Competition Submission Document**: [docs/submission/final-submission.md](file:///docs/submission/final-submission.md)
+- **Snapdragon Deployment Guide**: [docs/snapdragon-deployment.md](file:///docs/snapdragon-deployment.md)
+- **Evidence & Verification Index**: [docs/submission/evidence-index.md](file:///docs/submission/evidence-index.md)
+- **Security & Threat Model**: [docs/threat-model.md](file:///docs/threat-model.md)

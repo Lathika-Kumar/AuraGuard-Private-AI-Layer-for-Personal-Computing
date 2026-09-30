@@ -254,10 +254,13 @@ export default function AskPage() {
           </div>
 
           {/* Answer Card */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <p className="font-semibold uppercase tracking-wider text-cyan-400">Answer</p>
+                <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300 font-medium border border-emerald-500/30">
+                  Generated locally on-device
+                </span>
                 {sourceTypes.length > 0 ? (
                   <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 font-medium">
                     Context: {sourceTypes.includes('document') && sourceTypes.includes('memory')
@@ -269,13 +272,13 @@ export default function AskPage() {
                 ) : null}
               </div>
 
-              {metrics?.total_latency_seconds ? (
-                <span className="text-xs text-slate-400 font-mono">
-                  Latency: {metrics.total_latency_seconds}s
-                  {metrics.llm_latency_seconds ? ` (LLM: ${metrics.llm_latency_seconds}s)` : ''}
-                  {metrics.execution_provider ? ` • ${metrics.execution_provider}` : ''}
-                </span>
-              ) : null}
+              <div className="text-xs text-slate-400 font-mono flex items-center gap-2">
+                <span>Runtime:</span>
+                <span className="text-cyan-300 font-semibold">{metrics?.execution_provider ?? 'CPUExecutionProvider'}</span>
+                {metrics?.total_latency_seconds ? (
+                  <span className="text-slate-500">({metrics.total_latency_seconds}s)</span>
+                ) : null}
+              </div>
             </div>
 
             <p className="mt-4 whitespace-pre-wrap leading-relaxed text-slate-100">{answer}</p>
@@ -298,6 +301,29 @@ export default function AskPage() {
               </div>
             </div>
           </div>
+
+          {/* Retrieved Context Details (Part 7) */}
+          {sources.length > 0 || memoriesUsed.length > 0 ? (
+            <details className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-300">
+              <summary className="cursor-pointer font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200 transition">
+                Retrieved Context &amp; Provenance Details ({sources.length} document chunks, {memoriesUsed.length} memories)
+              </summary>
+              <div className="mt-3 space-y-2 border-t border-slate-800 pt-3">
+                {sources.map((s, idx) => (
+                  <div key={idx} className="rounded bg-slate-950 p-2.5 border border-slate-800/80">
+                    <span className="text-cyan-400 font-semibold">Document: {s.filename} &bull; Page {s.page_number}</span>
+                    <p className="mt-1 text-slate-400 font-mono text-[11px] truncate">{s.text || 'Encrypted chunk text decrypted in-memory for local prompt context.'}</p>
+                  </div>
+                ))}
+                {memoriesUsed.map((m) => (
+                  <div key={m.id} className="rounded bg-slate-950 p-2.5 border border-slate-800/80">
+                    <span className="text-purple-400 font-semibold">Memory: ReMind memory #{m.id} &bull; ({m.memory_type})</span>
+                    <p className="mt-1 text-slate-300 font-mono text-[11px]">{m.content}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : null}
 
           {/* Attributed Document Sources (Part 9 Transparency) */}
           {sources.length > 0 ? (

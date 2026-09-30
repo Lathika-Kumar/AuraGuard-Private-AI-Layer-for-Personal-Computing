@@ -43,7 +43,14 @@ def _validate_pdf(file: UploadFile) -> None:
 async def list_documents() -> list[dict[str, Any]]:
     with get_db_connection() as conn:
         rows = conn.execute(
-            "SELECT id, filename, file_path, file_hash, mime_type, file_size, created_at, processed_at, status FROM documents ORDER BY created_at DESC"
+            """
+            SELECT d.id, d.filename, d.file_path, d.file_hash, d.mime_type, d.file_size, d.created_at, d.processed_at, d.status,
+                   COUNT(c.id) as chunk_count
+            FROM documents d
+            LEFT JOIN document_chunks c ON d.id = c.document_id
+            GROUP BY d.id
+            ORDER BY d.created_at DESC
+            """
         ).fetchall()
         return [dict(row) for row in rows]
 
