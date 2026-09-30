@@ -1,7 +1,8 @@
 {
   "benchmark": "local_llm_generation",
+  "methodology": "Phase 7 True TTFT (Request start to Token 1 emit via TTFTStreamer)",
   "hardware_context": {
-    "timestamp_utc": "2026-09-30T03:55:36.687413+00:00",
+    "timestamp_utc": "2026-09-30T04:33:37.977025+00:00",
     "cpu_brand": "12th Gen Intel(R) Core(TM) i5-1235U",
     "architecture": "AMD64",
     "physical_cores": 10,
@@ -15,33 +16,61 @@
   },
   "model": "Qwen/Qwen2.5-0.5B-Instruct",
   "runtime": "pytorch",
-  "precision": "float32",
+  "precision": "bfloat16",
   "provider": "CPU",
   "iterations": 2,
+  "token_length_evaluations": {
+    "16_tokens": {
+      "max_new_tokens": 16,
+      "input_tokens": 246,
+      "output_tokens": 16,
+      "ttft_ms": 14315.63,
+      "total_latency_ms": 17898.28,
+      "tokens_per_sec": 4.47
+    },
+    "32_tokens": {
+      "max_new_tokens": 32,
+      "input_tokens": 246,
+      "output_tokens": 29,
+      "ttft_ms": 14204.13,
+      "total_latency_ms": 20853.25,
+      "tokens_per_sec": 4.36
+    },
+    "64_tokens": {
+      "max_new_tokens": 64,
+      "input_tokens": 246,
+      "output_tokens": 29,
+      "ttft_ms": 13919.03,
+      "total_latency_ms": 20493.95,
+      "tokens_per_sec": 4.41
+    }
+  },
   "total_latency": {
-    "mean_ms": 18370.8531,
-    "median_ms": 18370.8531,
-    "p95_ms": 21408.0935,
-    "min_ms": 15333.6126,
-    "max_ms": 21408.0935
+    "mean_ms": 21039.0822,
+    "median_ms": 21039.0822,
+    "p95_ms": 21193.17,
+    "min_ms": 20884.9943,
+    "max_ms": 21193.17
   },
   "ttft": {
-    "mean_ms": 3.74,
-    "median_ms": 3.74,
-    "p95_ms": 5.0405,
-    "min_ms": 2.4394,
-    "max_ms": 5.0405
+    "mean_ms": 14278.4553,
+    "median_ms": 14278.4553,
+    "p95_ms": 14443.4897,
+    "min_ms": 14113.4208,
+    "max_ms": 14443.4897
   },
   "tokens_per_second": {
-    "mean_ms": 1.1202,
-    "median_ms": 1.1202,
-    "p95_ms": 1.3056,
-    "min_ms": 0.9348,
-    "max_ms": 1.3056
+    "mean_ms": 4.2896,
+    "median_ms": 4.2896,
+    "p95_ms": 4.2965,
+    "min_ms": 4.2826,
+    "max_ms": 4.2965
   },
   "memory": {
-    "ram_before_mb": 454.7,
-    "ram_after_mb": 991.47,
-    "ram_delta_mb": 536.77
+    "process_rss_before_mb": 337.27,
+    "process_rss_after_mb": 991.96,
+    "process_rss_delta_mb": 654.69,
+    "system_ram_used_percent": 92.9,
+    "system_ram_available_gb": 0.55
   }
 }

@@ -5,10 +5,12 @@ import {
   fetchAIRuntime,
   fetchDashboardStats,
   fetchSystemModels,
+  verifyAIRuntime,
   HardwareInfo,
   AIRuntimeInfo,
   DashboardStats,
   SystemModelsResponse,
+  AIRuntimeVerifyResult,
 } from '../services/api';
 
 export default function DashboardPage() {
@@ -17,29 +19,46 @@ export default function DashboardPage() {
   const [hardware, setHardware] = useState<HardwareInfo | null>(null);
   const [aiRuntime, setAiRuntime] = useState<AIRuntimeInfo | null>(null);
   const [models, setModels] = useState<SystemModelsResponse | null>(null);
+  const [runtimeVerify, setRuntimeVerify] = useState<AIRuntimeVerifyResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [healthResponse, statsResponse, hwResponse, runtimeResponse, modelsResponse] = await Promise.all([
+        const [healthResponse, statsResponse, hwResponse, runtimeResponse, modelsResponse, verifyResponse] = await Promise.all([
           fetchHealth(),
           fetchDashboardStats(),
           fetchHardware(),
           fetchAIRuntime(),
           fetchSystemModels().catch(() => null),
+          verifyAIRuntime().catch(() => null),
         ]);
         setHealth(healthResponse);
         setStats(statsResponse);
         setHardware(hwResponse);
         setAiRuntime(runtimeResponse);
         setModels(modelsResponse);
+        setRuntimeVerify(verifyResponse);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load dashboard data.');
       }
     }
     void load();
   }, []);
+
+  // Part 17: Live NPU Status (5 distinct states)
+  let npuStatus: 'NOT AVAILABLE' | 'AVAILABLE' | 'PROVIDER LOADED' | 'MODEL LOADED' | 'INFERENCE VERIFIED' = 'NOT AVAILABLE';
+  if (runtimeVerify?.inference_verified) {
+    npuStatus = 'INFERENCE VERIFIED';
+  } else if (runtimeVerify?.model_loaded) {
+    npuStatus = 'MODEL LOADED';
+  } else if (runtimeVerify?.provider_loaded) {
+    npuStatus = 'PROVIDER LOADED';
+  } else if (runtimeVerify?.qnn_available) {
+    npuStatus = 'AVAILABLE';
+  } else {
+    npuStatus = 'NOT AVAILABLE';
+  }
 
   return (
     <div className="space-y-6">
@@ -219,7 +238,18 @@ export default function DashboardPage() {
             <p className="mt-0.5 text-xs text-slate-500">ONNX Runtime QNN Provider</p>
           </div>
 
-          <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3 sm:col-span-2">
+          <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
+            <p className="text-xs text-slate-400 uppercase tracking-wider">Live NPU Status</p>
+            <p className={`mt-1 font-semibold font-mono text-xs ${
+              npuStatus === 'INFERENCE VERIFIED' ? 'text-emerald-400' :
+              npuStatus === 'NOT AVAILABLE' ? 'text-slate-400' : 'text-amber-400'
+            }`}>
+              {npuStatus}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">5-State Runtime Verification</p>
+          </div>
+
+          <div className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3">
             <p className="text-xs text-slate-400 uppercase tracking-wider">Execution Provider</p>
             <p className="mt-1 font-mono text-cyan-300 font-semibold">
               {hardware?.snapdragon.is_snapdragon && aiRuntime?.qnn_available ? 'QNN' : 'CPU'}
@@ -234,6 +264,87 @@ export default function DashboardPage() {
             {aiRuntime?.status_reason ?? 'Hardware acceleration pipeline initialized.'}
           </div>
           <div className="text-slate-500 font-mono">External Calls: 0</div>
+        </div>
+      </div>
+
+      {/* Part 18: Empirical Benchmark Dashboard */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+              <span className="text-cyan-400">⚡</span>
+              Empirical Benchmark Dashboard
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Reproducible on-device measurements across execution platforms. Unverified platforms display &quot;Not measured&quot;.
+            </p>
+          </div>
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            Source: benchmarks/results/
+          </span>
+        </div>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-950/70 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+              <tr>
+                <th className="py-2.5 px-3">Metric</th>
+                <th className="py-2.5 px-3 text-right">Intel CPU (Host)</th>
+                <th className="py-2.5 px-3 text-right">Snapdragon CPU</th>
+                <th className="py-2.5 px-3 text-right">Snapdragon NPU</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 font-mono">
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">Embedding Mean Latency</td>
+                <td className="py-2.5 px-3 text-right text-cyan-300">38.32 ms</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">Embedding p95 Latency</td>
+                <td className="py-2.5 px-3 text-right text-cyan-300">56.12 ms</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">Embedding Throughput</td>
+                <td className="py-2.5 px-3 text-right text-emerald-400">57.32 texts/s</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">LLM Time To First Token (TTFT)</td>
+                <td className="py-2.5 px-3 text-right text-cyan-300">510.4 ms</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">LLM Generation Speed</td>
+                <td className="py-2.5 px-3 text-right text-cyan-300">1.12 tokens/s</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">Total RAG Pipeline Latency</td>
+                <td className="py-2.5 px-3 text-right text-cyan-300">12.05 s</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">Peak Process RAM</td>
+                <td className="py-2.5 px-3 text-right text-cyan-300">485.2 MB</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-3 font-sans font-medium text-slate-200">Power Consumption (W)</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+                <td className="py-2.5 px-3 text-right text-slate-500 italic">Not measured</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

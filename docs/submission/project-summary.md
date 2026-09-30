@@ -34,4 +34,4 @@ AuraGuard resolves this conflict by shifting the entire AI lifecycle directly on
 ## Current Verification Status
 
 * **Host Environment Verified**: 12th Gen Intel Core i5-1235U, Windows 11 x86_64, `CPUExecutionProvider` active with 100% automated test coverage.
-* **Snapdragon Readiness Verified**: Hardware detection distinguishes generic ARM64 from Snapdragon silicon; QNN runtime verification endpoint implemented (`GET /api/system/ai-runtime/verify`); QNN validation script (`scripts/qualcomm/verify_snapdragon.ps1`) ready for plug-and-play NPU deployment.
+* **Snapdragon Acceleration Status**: Snapdragon deployment path implemented; physical NPU validation pending access to compatible physical Snapdragon hardware. Automated validation tooling (`scripts/qualcomm/verify_snapdragon.ps1` and `scripts/qualcomm/validate_artifacts.py`) and runtime verification endpoint (`GET /api/system/ai-runtime/verify`) are verified and production-ready.

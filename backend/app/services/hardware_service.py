@@ -144,6 +144,19 @@ class HardwareService:
         providers = cls.get_available_execution_providers()
         qnn_available = "QNNExecutionProvider" in providers
 
+        # Check if QNN package or binaries are installed
+        qnn_installed = False
+        try:
+            import importlib.util
+            qnn_installed = (
+                importlib.util.find_spec("onnxruntime_qnn") is not None
+                or qnn_available
+                or os.path.exists("C:\\Qualcomm\\AIStack")
+                or bool(os.environ.get("QNN_SDK_ROOT"))
+            )
+        except Exception:
+            qnn_installed = qnn_available
+
         provider_loaded = False
         model_loaded = False
         inference_verified = False
@@ -172,6 +185,7 @@ class HardwareService:
 
         return {
             "hardware_detected": hw_detected,
+            "qnn_installed": qnn_installed,
             "qnn_available": qnn_available,
             "provider_loaded": provider_loaded,
             "model_loaded": model_loaded,

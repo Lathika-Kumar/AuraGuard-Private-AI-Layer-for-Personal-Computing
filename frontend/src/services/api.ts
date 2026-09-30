@@ -479,6 +479,7 @@ export async function fetchSecurityStatus(): Promise<SecurityStatus> {
 
 export type AIRuntimeVerifyResult = {
   hardware_detected: boolean;
+  qnn_installed?: boolean;
   qnn_available: boolean;
   provider_loaded: boolean;
   model_loaded: boolean;
