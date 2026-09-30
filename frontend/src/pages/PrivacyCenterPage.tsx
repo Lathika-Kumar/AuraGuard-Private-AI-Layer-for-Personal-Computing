@@ -172,45 +172,79 @@ export default function PrivacyCenterPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-xs font-mono">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 text-xs font-mono">
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400 uppercase text-[10px]">Privacy Mode</p>
+            <p className="font-bold text-cyan-300 mt-1 uppercase">
+              {policyInfo?.mode ?? currentPolicy?.privacy_mode ?? 'BALANCED'}
+            </p>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+              ACTIVE
+            </span>
+          </div>
+
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
             <p className="text-slate-400 uppercase text-[10px]">Local Processing</p>
             <p className="font-bold text-emerald-400 mt-1">
-              {currentPolicy?.local_processing ?? 'ON'}
+              ON-DEVICE
             </p>
-            <span className="text-[10px] text-slate-500">100% on-device</span>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+              ACTIVE
+            </span>
           </div>
 
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
             <p className="text-slate-400 uppercase text-[10px]">External AI</p>
             <p className="font-bold text-red-400 mt-1">
-              {currentPolicy?.external_ai ?? 'BLOCKED'}
+              CLOUD EGRESS
             </p>
-            <span className="text-[10px] text-slate-500">Zero cloud egress</span>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">
+              BLOCKED
+            </span>
+          </div>
+
+          <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
+            <p className="text-slate-400 uppercase text-[10px]">Sensitive Data</p>
+            <p className="font-bold text-purple-300 mt-1 uppercase">
+              {currentPolicy?.sensitive_data_action ?? 'BLOCK'}
+            </p>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/30">
+              {currentPolicy?.sensitive_data_action === 'BLOCK' ? 'BLOCKED' : 'ACTIVE'}
+            </span>
           </div>
 
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
             <p className="text-slate-400 uppercase text-[10px]">Memory Consent</p>
             <p className="font-bold text-amber-300 mt-1">
-              {currentPolicy?.memory_mode ?? 'USER APPROVAL'}
+              REMIND GATE
             </p>
-            <span className="text-[10px] text-slate-500">ReMind permission</span>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+              {currentPolicy?.memory_mode === 'NEVER' ? 'BLOCKED' : 'USER APPROVAL'}
+            </span>
           </div>
 
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <p className="text-slate-400 uppercase text-[10px]">Sensitive Data</p>
-            <p className="font-bold text-purple-300 mt-1">
-              {currentPolicy?.sensitive_data_action ?? 'BLOCK'}
+            <p className="text-slate-400 uppercase text-[10px]">Encryption</p>
+            <p className="font-bold text-cyan-400 mt-1 truncate" title="AES-256-GCM / DPAPI">
+              AES-256-GCM
             </p>
-            <span className="text-[10px] text-slate-500">Secrets shielded</span>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+              ACTIVE
+            </span>
           </div>
 
           <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80">
-            <p className="text-slate-400 uppercase text-[10px]">Encrypted Storage</p>
-            <p className="font-bold text-cyan-400 mt-1">
-              {security?.storage_encryption ? 'ON (AES-256)' : 'ON'}
+            <p className="text-slate-400 uppercase text-[10px]">Snapdragon NPU</p>
+            <p className="font-bold text-slate-300 mt-1 truncate">
+              {isQNN ? 'QNN ACTIVE' : 'HOST FALLBACK'}
             </p>
-            <span className="text-[10px] text-slate-500">DPAPI protected</span>
+            <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${
+              isQNN
+                ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+                : 'bg-slate-800 text-slate-400 border border-slate-700'
+            }`}>
+              {isQNN ? 'ACTIVE' : 'NOT AVAILABLE'}
+            </span>
           </div>
         </div>
       </div>

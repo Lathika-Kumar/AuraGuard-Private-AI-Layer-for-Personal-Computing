@@ -313,41 +313,43 @@ export default function AskPage() {
             </div>
           ) : null}
 
-          {/* Memory Candidate Consent Banner (Part 5) */}
+          {/* Memory Candidate Consent Banner (Part 5 & 6) */}
           {memoryCandidate ? (
-            <div className="rounded-xl border border-purple-500/50 bg-purple-500/10 p-4 text-xs text-purple-200 shadow-md">
+            <div className="rounded-xl border border-purple-500/60 bg-gradient-to-r from-purple-950/40 via-slate-900 to-purple-950/30 p-4 text-xs text-purple-200 shadow-lg">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-1">
+                <div className="space-y-1.5 max-w-xl">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">💡</span>
-                    <span className="font-bold text-purple-300 text-sm">Potential Memory Detected</span>
-                    <span className="rounded bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-500/30">
+                    <span className="text-base">💡</span>
+                    <span className="font-bold text-purple-200 text-sm">Potential Memory Detected</span>
+                    <span className="rounded bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-500/40">
                       {memoryCandidate.memory_type}
                     </span>
                   </div>
-                  <p className="text-slate-300">{memoryCandidate.reason}</p>
-                  <p className="font-mono text-slate-100 bg-slate-950/70 p-2 rounded border border-purple-500/30">
-                    "{memoryCandidate.content}"
+                  <p className="text-slate-300">
+                    AuraGuard detected recurring information that may be useful later: <strong className="text-purple-200">{memoryCandidate.reason}</strong>. Save this memory?
+                  </p>
+                  <p className="font-mono text-slate-100 bg-slate-950/80 p-2.5 rounded border border-purple-500/30 text-xs">
+                    &ldquo;{memoryCandidate.content}&rdquo;
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {candidateSaved ? (
-                    <span className="rounded bg-emerald-500/20 px-3 py-1.5 font-bold text-emerald-300 border border-emerald-500/30">
-                      ✓ Saved to ReMind
+                    <span className="rounded bg-emerald-500/20 px-3.5 py-2 font-bold text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                      <span>✓</span> Saved to ReMind (AES-256 Encrypted)
                     </span>
                   ) : (
                     <>
                       <button
                         onClick={() => handleSaveCandidate(memoryCandidate)}
-                        className="rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white hover:bg-purple-500 transition shadow"
+                        className="rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white hover:bg-purple-500 transition shadow-md hover:shadow-purple-500/20"
                       >
-                        Save to ReMind
+                        Save Memory
                       </button>
                       <button
                         onClick={() => setMemoryCandidate(null)}
-                        className="rounded-lg bg-slate-800 px-3 py-2 text-slate-400 hover:text-slate-200 transition"
+                        className="rounded-lg bg-slate-800 border border-slate-700 px-3.5 py-2 text-slate-300 hover:text-white transition"
                       >
-                        Don't Save
+                        Don&apos;t Save
                       </button>
                     </>
                   )}

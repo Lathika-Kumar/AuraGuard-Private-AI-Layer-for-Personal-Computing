@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1050" width="900" height="1050"
+     font-family="'Segoe UI', Inter, system-ui, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="1050" fill="#020817"/>
+
+  <!-- Title -->
+  <text x="450" y="42" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700" letter-spacing="1">
+    AURAGUARD — ARCHITECTURE
+  </text>
+  <text x="450" y="62" text-anchor="middle" fill="#64748b" font-size="11">
+    Private AI Decision Layer for Personal Computing · Development Host: Intel i5-1235U (CPUExecutionProvider)
+  </text>
+
+  <!-- USER -->
+  <rect x="350" y="80" width="200" height="44" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="450" y="107" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="600">User</text>
+
+  <line x1="450" y1="124" x2="450" y2="150" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- AURAGUARD UI -->
+  <rect x="310" y="150" width="280" height="44" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="450" y="177" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">AuraGuard UI (React)</text>
+
+  <line x1="450" y1="194" x2="450" y2="225" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- PRIVATE AI DECISION LAYER -->
+  <rect x="160" y="225" width="580" height="148" rx="12" fill="#0c1a2e" stroke="#0ea5e9" stroke-width="2"/>
+  <text x="450" y="249" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="700">Private AI Decision Layer</text>
+
+  <rect x="180" y="258" width="125" height="96" rx="8" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="242" y="278" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" letter-spacing="0.5">SENSITIVITY</text>
+  <text x="242" y="290" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" letter-spacing="0.5">CLASSIFICATION</text>
+  <text x="242" y="308" text-anchor="middle" fill="#e2e8f0" font-size="10">PUBLIC</text>
+  <text x="242" y="320" text-anchor="middle" fill="#e2e8f0" font-size="10">PERSONAL</text>
+  <text x="242" y="332" text-anchor="middle" fill="#fbbf24" font-size="10">SENSITIVE</text>
+  <text x="242" y="344" text-anchor="middle" fill="#f87171" font-size="10">SECRET &#8594; BLOCK</text>
+
+  <rect x="317" y="258" width="125" height="96" rx="8" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="379" y="278" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" letter-spacing="0.5">PRIVACY POLICY</text>
+  <text x="379" y="300" text-anchor="middle" fill="#34d399" font-size="10">Local Only: ON</text>
+  <text x="379" y="314" text-anchor="middle" fill="#f87171" font-size="10">Cloud Egress: BLOCK</text>
+  <text x="379" y="328" text-anchor="middle" fill="#fbbf24" font-size="10">Memory: Consent</text>
+  <text x="379" y="344" text-anchor="middle" fill="#34d399" font-size="10">Encrypt: AES-256</text>
+
+  <rect x="454" y="258" width="125" height="96" rx="8" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="516" y="278" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" letter-spacing="0.5">HARDWARE ROUTING</text>
+  <text x="516" y="300" text-anchor="middle" fill="#67e8f9" font-size="10">CPU: ACTIVE</text>
+  <text x="516" y="314" text-anchor="middle" fill="#64748b" font-size="10">QNN: NOT DETECTED</text>
+  <text x="516" y="328" text-anchor="middle" fill="#64748b" font-size="10">(Snapdragon target)</text>
+  <text x="516" y="344" text-anchor="middle" fill="#94a3b8" font-size="10">Auto-arbitration</text>
+
+  <rect x="591" y="258" width="125" height="96" rx="8" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="653" y="278" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" letter-spacing="0.5">MEMORY POLICY</text>
+  <text x="653" y="300" text-anchor="middle" fill="#c084fc" font-size="10">Explicit Consent</text>
+  <text x="653" y="314" text-anchor="middle" fill="#e2e8f0" font-size="10">User Approval Gate</text>
+  <text x="653" y="328" text-anchor="middle" fill="#34d399" font-size="10">AES-256 at Rest</text>
+  <text x="653" y="344" text-anchor="middle" fill="#e2e8f0" font-size="10">Purge on Delete</text>
+
+  <line x1="450" y1="373" x2="450" y2="402" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- INPUT PRIVACY GUARD -->
+  <rect x="310" y="402" width="280" height="44" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="450" y="424" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="600">Input Privacy Guard</text>
+  <text x="450" y="438" text-anchor="middle" fill="#64748b" font-size="9">Scans: API keys · passwords · PII · auth tokens</text>
+
+  <line x1="380" y1="446" x2="290" y2="480" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="520" y1="446" x2="620" y2="480" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- LOCAL RAG -->
+  <rect x="140" y="480" width="300" height="130" rx="12" fill="#0c1a2e" stroke="#0ea5e9" stroke-width="1.5"/>
+  <text x="290" y="502" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="700">Local RAG</text>
+
+  <rect x="158" y="512" width="85" height="80" rx="7" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="200" y="530" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">EMBEDDING</text>
+  <text x="200" y="544" text-anchor="middle" fill="#e2e8f0" font-size="9">all-MiniLM</text>
+  <text x="200" y="556" text-anchor="middle" fill="#e2e8f0" font-size="9">L6-v2</text>
+  <text x="200" y="570" text-anchor="middle" fill="#67e8f9" font-size="9">INT8 ONNX</text>
+  <text x="200" y="582" text-anchor="middle" fill="#67e8f9" font-size="9">384-dim</text>
+
+  <rect x="253" y="512" width="85" height="80" rx="7" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="295" y="530" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">FAISS</text>
+  <text x="295" y="544" text-anchor="middle" fill="#e2e8f0" font-size="9">FlatL2 Index</text>
+  <text x="295" y="556" text-anchor="middle" fill="#e2e8f0" font-size="9">AES-256-GCM</text>
+  <text x="295" y="570" text-anchor="middle" fill="#e2e8f0" font-size="9">encrypted</text>
+  <text x="295" y="582" text-anchor="middle" fill="#67e8f9" font-size="9">at rest</text>
+
+  <rect x="348" y="512" width="85" height="80" rx="7" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="390" y="530" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">DOCUMENTS</text>
+  <text x="390" y="544" text-anchor="middle" fill="#e2e8f0" font-size="9">PDF Parse</text>
+  <text x="390" y="556" text-anchor="middle" fill="#e2e8f0" font-size="9">Page-aware</text>
+  <text x="390" y="570" text-anchor="middle" fill="#e2e8f0" font-size="9">Chunking</text>
+  <text x="390" y="582" text-anchor="middle" fill="#67e8f9" font-size="9">Source cited</text>
+
+  <!-- USER-APPROVED MEMORY (ReMind) -->
+  <rect x="465" y="480" width="295" height="130" rx="12" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="612" y="502" text-anchor="middle" fill="#d8b4fe" font-size="12" font-weight="700">User-Approved Memory (ReMind)</text>
+
+  <rect x="482" y="512" width="120" height="80" rx="7" fill="#0f172a" stroke="#3b1f6e" stroke-width="1"/>
+  <text x="542" y="528" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">CONSENT FLOW</text>
+  <text x="542" y="542" text-anchor="middle" fill="#e2e8f0" font-size="9">Memory detected</text>
+  <text x="542" y="554" text-anchor="middle" fill="#fbbf24" font-size="9">User reviews</text>
+  <text x="542" y="566" text-anchor="middle" fill="#34d399" font-size="9">Explicit approval</text>
+  <text x="542" y="578" text-anchor="middle" fill="#e2e8f0" font-size="9">or declined</text>
+
+  <rect x="614" y="512" width="130" height="80" rx="7" fill="#0f172a" stroke="#3b1f6e" stroke-width="1"/>
+  <text x="679" y="528" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">ENCRYPTED STORE</text>
+  <text x="679" y="542" text-anchor="middle" fill="#c084fc" font-size="9">SQLite + FAISS</text>
+  <text x="679" y="554" text-anchor="middle" fill="#34d399" font-size="9">AES-256-GCM</text>
+  <text x="679" y="566" text-anchor="middle" fill="#34d399" font-size="9">DPAPI key wrap</text>
+  <text x="679" y="580" text-anchor="middle" fill="#e2e8f0" font-size="9">Purge = zero-trace</text>
+
+  <line x1="290" y1="610" x2="370" y2="660" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="612" y1="610" x2="540" y2="660" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- CONTEXT FIREWALL -->
+  <rect x="270" y="660" width="360" height="52" rx="10" fill="#1c1200" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="450" y="681" text-anchor="middle" fill="#fcd34d" font-size="12" font-weight="700">Context Firewall</text>
+  <text x="450" y="698" text-anchor="middle" fill="#92400e" font-size="9">Prompt-injection neutralization · Adversarial directive scrubbing · Audit log</text>
+
+  <line x1="450" y1="712" x2="450" y2="745" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- LOCAL LLM -->
+  <rect x="180" y="745" width="540" height="120" rx="12" fill="#0c1a2e" stroke="#0ea5e9" stroke-width="2"/>
+  <text x="450" y="768" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="700">Local LLM — Qwen2.5-0.5B-Instruct</text>
+
+  <rect x="200" y="779" width="220" height="72" rx="9" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="310" y="797" text-anchor="middle" fill="#86efac" font-size="10" font-weight="700">CPUExecutionProvider</text>
+  <text x="310" y="811" text-anchor="middle" fill="#34d399" font-size="9">&#10003; ACTIVE on Intel i5-1235U</text>
+  <text x="310" y="823" text-anchor="middle" fill="#64748b" font-size="9">~4.3 tokens/sec (MEASURED)</text>
+  <text x="310" y="835" text-anchor="middle" fill="#64748b" font-size="9">FP32 · 992 MB peak RSS</text>
+  <text x="310" y="847" text-anchor="middle" fill="#64748b" font-size="9">Source: benchmarks/results/</text>
+
+  <rect x="480" y="779" width="220" height="72" rx="9" fill="#0f172a" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 2"/>
+  <text x="590" y="797" text-anchor="middle" fill="#475569" font-size="10" font-weight="700">QNNExecutionProvider</text>
+  <text x="590" y="811" text-anchor="middle" fill="#475569" font-size="9">NOT DETECTED (Snapdragon target)</text>
+  <text x="590" y="823" text-anchor="middle" fill="#475569" font-size="9">Hexagon NPU · Snapdragon X Elite</text>
+  <text x="590" y="835" text-anchor="middle" fill="#475569" font-size="9">Auto-activates on detection</text>
+  <text x="590" y="847" text-anchor="middle" fill="#475569" font-size="9">NOT MEASURED on Intel host</text>
+
+  <line x1="450" y1="865" x2="450" y2="898" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- OUTPUT PRIVACY GUARD -->
+  <rect x="310" y="898" width="280" height="44" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="450" y="920" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="600">Output Privacy Guard</text>
+  <text x="450" y="934" text-anchor="middle" fill="#64748b" font-size="9">Scans: PII · emails · phone numbers · credential leaks</text>
+
+  <line x1="450" y1="942" x2="450" y2="972" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ATTRIBUTED ANSWER -->
+  <rect x="280" y="972" width="340" height="48" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="450" y="993" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600">User — Attributed Answer</text>
+  <text x="450" y="1008" text-anchor="middle" fill="#64748b" font-size="9">+ "Why this answer?" Transparency Panel · Source citations · Privacy checks</text>
+
+  <!-- Arrowhead marker -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <!-- Legend -->
+  <rect x="20" y="960" width="230" height="78" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+  <text x="30" y="977" fill="#94a3b8" font-size="9" font-weight="600">LEGEND</text>
+  <rect x="30" y="984" width="10" height="10" rx="2" fill="none" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="46" y="993" fill="#64748b" font-size="9">Active and MEASURED on Intel host</text>
+  <rect x="30" y="1000" width="10" height="10" rx="2" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="3 1"/>
+  <text x="46" y="1009" fill="#64748b" font-size="9">TARGET — Snapdragon, NOT MEASURED</text>
+  <rect x="30" y="1016" width="10" height="10" rx="2" fill="none" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="46" y="1025" fill="#64748b" font-size="9">User-controlled memory (ReMind)</text>
+
+</svg>
